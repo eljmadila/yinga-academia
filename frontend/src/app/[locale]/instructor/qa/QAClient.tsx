@@ -1,19 +1,20 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { MessageSquare, Search, Filter, CheckCircle2, Clock, MoreVertical, Reply } from 'lucide-react';
-import Link from 'next/link';
+import { MessageSquare, Search, CheckCircle2, Clock, Reply } from 'lucide-react';
 import { resolveApiUrl } from '@/lib/api';
 
 interface Answer {
   id: string;
   body: string;
-  author: {
+  author?: {
     id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+  } | string;
+  author_name?: string;
+  author_role?: string;
   created_at: string;
 }
 
@@ -23,21 +24,32 @@ interface Question {
   body: string;
   is_resolved: boolean;
   created_at: string;
-  student: {
+  student?: {
     id: string;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-  lesson: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+  } | string;
+  student_name?: string;
+  lesson?: {
     id: string;
     title: string;
-    course: {
+    course?: {
       id: string;
       title: string;
     };
-  };
-  answers: Answer[];
+  } | string | null;
+  lesson_details?: {
+    id: string;
+    title: string;
+    course?: {
+      id: string;
+      title: string;
+    } | null;
+  } | null;
+  course_title?: string;
+  lesson_title?: string;
+  answers?: Answer[];
 }
 
 export default function QAClient({ token }: { token: string | undefined }) {
@@ -58,19 +70,21 @@ export default function QAClient({ token }: { token: string | undefined }) {
     })
     .then(res => res.json())
     .then(data => {
-      setQuestions(data);
-      if (data.length > 0) {
-        setActiveQuestion(data[0]);
+      const list: Question[] = Array.isArray(data) ? data : (data?.results || []);
+      setQuestions(list);
+      if (list.length > 0) {
+        setActiveQuestion(list[0]);
       }
     })
     .catch(err => console.error("Failed to fetch questions:", err));
   }, [token]);
 
   const filteredQuestions = questions.filter(q => {
-    const matchesSearch = q.title.toLowerCase().includes(search.toLowerCase()) || q.body.toLowerCase().includes(search.toLowerCase());
-    if (!matchesSearch) return false;
+    const titleMatch = (q.title || "").toLowerCase().includes(search.toLowerCase());
+    const bodyMatch = (q.body || "").toLowerCase().includes(search.toLowerCase());
+    if (!titleMatch && !bodyMatch) return false;
     
-    if (filter === "unanswered") return q.answers.length === 0;
+    if (filter === "unanswered") return (q.answers || []).length === 0;
     return true;
   });
 
@@ -96,7 +110,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
         // Update local state
         setQuestions(prev => prev.map(q => {
           if (q.id === activeQuestion.id) {
-            const updated = { ...q, answers: [...q.answers, newAnswer] };
+            const updated = { ...q, answers: [...(q.answers || []), newAnswer] };
             if (activeQuestion.id === q.id) setActiveQuestion(updated);
             return updated;
           }
@@ -139,8 +153,10 @@ export default function QAClient({ token }: { token: string | undefined }) {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "";
     const d = new Date(dateString);
+    if (isNaN(d.getTime())) return "";
     const now = new Date();
     const diff = now.getTime() - d.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -150,9 +166,40 @@ export default function QAClient({ token }: { token: string | undefined }) {
     return d.toLocaleDateString();
   };
 
-  const getStudentName = (student: any) => {
-    if (student.first_name || student.last_name) return `${student.first_name} ${student.last_name}`.trim();
-    return student.email.split('@')[0];
+  const getCourseTitle = (q?: Question | null) => {
+    if (!q) return "Course";
+    if (q.lesson_details?.course?.title) return q.lesson_details.course.title;
+    if (typeof q.lesson === 'object' && q.lesson?.course?.title) return q.lesson.course.title;
+    if (q.course_title) return q.course_title;
+    return "Course Q&A";
+  };
+
+  const getLessonTitle = (q?: Question | null) => {
+    if (!q) return "General Lesson";
+    if (q.lesson_details?.title) return q.lesson_details.title;
+    if (typeof q.lesson === 'object' && q.lesson?.title) return q.lesson.title;
+    if (q.lesson_title) return q.lesson_title;
+    return "General Question";
+  };
+
+  const getStudentDisplayName = (q?: Question | null) => {
+    if (!q) return "Student";
+    if (q.student_name) return q.student_name;
+    const s = q.student;
+    if (!s) return "Student";
+    if (typeof s === "string") return s;
+    if (s.first_name || s.last_name) return `${s.first_name || ""} ${s.last_name || ""}`.trim();
+    if (s.email) return s.email.split('@')[0];
+    return "Student";
+  };
+
+  const getAuthorDisplayName = (author?: any, authorName?: string) => {
+    if (authorName) return authorName;
+    if (!author) return "Instructor";
+    if (typeof author === "string") return author;
+    if (author.first_name || author.last_name) return `${author.first_name || ""} ${author.last_name || ""}`.trim();
+    if (author.email) return author.email.split('@')[0];
+    return "Instructor";
   };
 
   return (
@@ -191,7 +238,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
               onClick={() => setFilter("unanswered")}
               className={`flex-1 py-3 text-sm font-semibold transition-colors ${filter === "unanswered" ? "text-brand-600 dark:text-brand-400 border-b-2 border-brand-500 bg-brand-50/50 dark:bg-brand-900/10" : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700/50"}`}
             >
-              Unanswered ({questions.filter(q => q.answers.length === 0).length})
+              Unanswered ({questions.filter(q => (q.answers || []).length === 0).length})
             </button>
             <button 
               onClick={() => setFilter("all")}
@@ -215,7 +262,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
                 >
                   <div className="flex justify-between items-start mb-2">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${activeQuestion?.id === q.id ? 'text-brand-600 dark:text-brand-400 bg-brand-100 dark:bg-brand-900/50' : 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800'}`}>
-                      Course: {q.lesson.course.title}
+                      Course: {getCourseTitle(q)}
                     </span>
                     <span className="text-xs text-gray-500 flex items-center gap-1">
                       <Clock className="w-3 h-3" /> {formatDate(q.created_at)}
@@ -242,11 +289,11 @@ export default function QAClient({ token }: { token: string | undefined }) {
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-400 to-brand-600 text-white flex items-center justify-center font-bold text-lg">
-                      {getStudentName(activeQuestion.student).charAt(0).toUpperCase()}
+                      {getStudentDisplayName(activeQuestion).charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 dark:text-white">{getStudentName(activeQuestion.student)}</h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{activeQuestion.lesson.title}</p>
+                      <h3 className="font-bold text-gray-900 dark:text-white">{getStudentDisplayName(activeQuestion)}</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{getLessonTitle(activeQuestion)}</p>
                     </div>
                   </div>
                   {activeQuestion.is_resolved ? (
@@ -272,29 +319,34 @@ export default function QAClient({ token }: { token: string | undefined }) {
 
               {/* Answers Area */}
               <div className="flex-1 bg-gray-50 dark:bg-gray-900/50 p-6 overflow-y-auto space-y-6">
-                {activeQuestion.answers.map(ans => (
-                  <div key={ans.id} className="flex gap-4">
-                    <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400 flex items-center justify-center font-bold text-sm shrink-0">
-                      {getStudentName(ans.author).charAt(0).toUpperCase()}
-                    </div>
-                    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 w-full">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-bold text-sm text-gray-900 dark:text-white">{getStudentName(ans.author)} (Instructor)</span>
-                        <span className="text-xs text-gray-500">{formatDate(ans.created_at)}</span>
+                {(activeQuestion.answers || []).map(ans => {
+                  const authorName = getAuthorDisplayName(ans.author, ans.author_name);
+                  return (
+                    <div key={ans.id} className="flex gap-4">
+                      <div className="w-8 h-8 rounded-full bg-brand-100 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400 flex items-center justify-center font-bold text-sm shrink-0">
+                        {authorName.charAt(0).toUpperCase()}
                       </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {ans.body}
-                      </p>
+                      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 w-full">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-bold text-sm text-gray-900 dark:text-white">
+                            {authorName} {ans.author_role === 'INSTRUCTOR' ? '(Instructor)' : ''}
+                          </span>
+                          <span className="text-xs text-gray-500">{formatDate(ans.created_at)}</span>
+                        </div>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                          {ans.body}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 <div className="bg-white dark:bg-gray-800 border border-brand-200 dark:border-brand-900/50 rounded-xl shadow-sm focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-all overflow-hidden flex flex-col mt-4">
                   <textarea 
                     value={replyBody}
                     onChange={e => setReplyBody(e.target.value)}
                     className="w-full p-4 bg-transparent outline-none text-gray-800 dark:text-gray-200 resize-none min-h-[120px]"
-                    placeholder={`Write your answer to ${getStudentName(activeQuestion.student)}...`}
+                    placeholder={`Write your answer to ${getStudentDisplayName(activeQuestion)}...`}
                   />
                   <div className="flex justify-end items-center p-3 bg-gray-50 dark:bg-gray-900/80 border-t border-gray-100 dark:border-gray-700">
                     <button 
@@ -320,3 +372,4 @@ export default function QAClient({ token }: { token: string | undefined }) {
     </div>
   );
 }
+

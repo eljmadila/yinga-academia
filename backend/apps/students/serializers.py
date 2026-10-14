@@ -62,12 +62,26 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 class QuestionSerializer(serializers.ModelSerializer):
     student_name = serializers.SerializerMethodField()
+    lesson_details = serializers.SerializerMethodField()
     answers = AnswerSerializer(many=True, read_only=True)
 
     class Meta:
         model = Question
-        fields = ('id', 'student', 'student_name', 'lesson', 'title', 'body', 'is_resolved', 'created_at', 'updated_at', 'answers')
+        fields = ('id', 'student', 'student_name', 'lesson', 'lesson_details', 'title', 'body', 'is_resolved', 'created_at', 'updated_at', 'answers')
         read_only_fields = ('id', 'student', 'created_at', 'updated_at')
 
     def get_student_name(self, obj):
         return f"{obj.student.first_name} {obj.student.last_name}".strip() or obj.student.email.split('@')[0]
+
+    def get_lesson_details(self, obj):
+        if not obj.lesson:
+            return None
+        course = getattr(obj.lesson, 'course', None)
+        return {
+            'id': str(obj.lesson.id),
+            'title': obj.lesson.title,
+            'course': {
+                'id': str(course.id) if course else None,
+                'title': course.title if course else "Course",
+            } if course else None,
+        }

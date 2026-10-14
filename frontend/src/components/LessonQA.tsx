@@ -138,7 +138,7 @@ export default function LessonQA({ lessonId }: { lessonId: string }) {
                     <div className="h-8 w-8 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center font-bold text-xs uppercase">
                       {q.student_name ? q.student_name.substring(0, 2) : "ST"}
                     </div>
-                    <span className="font-semibold text-gray-300 text-sm">{q.student_name}</span>
+                    <span className="font-semibold text-gray-300 text-sm">{q.student_name || "Student"}</span>
                     <span className="text-xs text-gray-600">• il y a quelques instants</span>
                   </div>
                   <h5 className="font-bold text-white text-lg mt-2">{q.title}</h5>
@@ -162,7 +162,7 @@ export default function LessonQA({ lessonId }: { lessonId: string }) {
                           {ans.author_name ? ans.author_name.substring(0, 2) : "XX"}
                         </div>
                         <span className={`font-semibold text-sm ${ans.author_role === 'INSTRUCTOR' ? 'text-yellow-500' : 'text-gray-300'}`}>
-                          {ans.author_name}
+                          {ans.author_name || "User"}
                           {ans.author_role === 'INSTRUCTOR' && <span className="ml-2 text-[10px] bg-yellow-500/20 px-1.5 py-0.5 rounded text-yellow-500">{t('instructor')}</span>}
                         </span>
                       </div>
