@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { resolveApiUrl } from "@/lib/api";
 
 function getAccessToken() {
   const match = document.cookie.match(/(?:^|; )access_token=([^;]*)/);
@@ -31,7 +30,7 @@ export default function CertificateDownloadButton({
     setError("");
     try {
       const response = await fetch(
-        `${API_URL}/api/enrollments/certificate/?course_id=${encodeURIComponent(courseId)}`,
+        resolveApiUrl(`/enrollments/certificate/?course_id=${encodeURIComponent(courseId)}`),
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!response.ok) throw new Error("Certificate download failed.");

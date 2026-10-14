@@ -3,8 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { MessageSquare, Search, Filter, CheckCircle2, Clock, MoreVertical, Reply } from 'lucide-react';
 import Link from 'next/link';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { resolveApiUrl } from '@/lib/api';
 
 interface Answer {
   id: string;
@@ -52,7 +51,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
   useEffect(() => {
     if (!token) return;
     
-    fetch(`${API_URL}/api/students/questions/`, {
+    fetch(resolveApiUrl('/questions/'), {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -80,7 +79,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
     setIsSubmitting(true);
     
     try {
-      const res = await fetch(`${API_URL}/api/students/answers/`, {
+      const res = await fetch(resolveApiUrl('/answers/'), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -119,7 +118,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
     if (!activeQuestion) return;
     
     try {
-      const res = await fetch(`${API_URL}/api/students/questions/${activeQuestion.id}/`, {
+      const res = await fetch(resolveApiUrl(`/questions/${activeQuestion.id}/`), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

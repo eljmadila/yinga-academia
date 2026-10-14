@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Settings, User, Bell, Shield, Link as LinkIcon, Camera, Loader2, Save, CheckCircle2, XCircle } from 'lucide-react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { resolveApiUrl, resolveMediaUrl } from '@/lib/api';
 
 interface UserProfile {
   id?: string;
@@ -66,7 +65,7 @@ export default function SettingsClient({ token }: { token?: string }) {
       return;
     }
     
-    fetch(`${API_URL}/api/auth/user/`, {
+    fetch(resolveApiUrl('/auth/user/'), {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -118,7 +117,7 @@ export default function SettingsClient({ token }: { token?: string }) {
         formData.append('social_links', JSON.stringify({ website, twitter, linkedin, github }));
         formData.append('avatar', avatarFile);
 
-        res = await fetch(`${API_URL}/api/auth/user/`, {
+        res = await fetch(resolveApiUrl('/auth/user/'), {
           method: 'PATCH',
           headers: { 
             Authorization: `Bearer ${token}` 
@@ -140,7 +139,7 @@ export default function SettingsClient({ token }: { token?: string }) {
           payload.avatar = null;
         }
 
-        res = await fetch(`${API_URL}/api/auth/user/`, {
+        res = await fetch(resolveApiUrl('/auth/user/'), {
           method: 'PATCH',
           headers: { 
             Authorization: `Bearer ${token}`,
@@ -176,7 +175,7 @@ export default function SettingsClient({ token }: { token?: string }) {
 
     setIsChangingPassword(true);
     try {
-      const res = await fetch(`${API_URL}/api/auth/password/change/`, {
+      const res = await fetch(resolveApiUrl('/auth/password/change/'), {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -270,7 +269,7 @@ export default function SettingsClient({ token }: { token?: string }) {
                     <div className="w-24 h-24 bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-full flex items-center justify-center text-3xl font-bold overflow-hidden">
                       {avatarPreview ? (
                         <img 
-                          src={avatarPreview.startsWith('blob:') ? avatarPreview : (avatarPreview.startsWith('http') ? avatarPreview : `${API_URL}${avatarPreview}`)} 
+                          src={resolveMediaUrl(avatarPreview)} 
                           alt="Profile" 
                           className="w-full h-full object-cover" 
                         />

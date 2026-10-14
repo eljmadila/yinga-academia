@@ -14,8 +14,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { resolveApiUrl } from "@/lib/api";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const MAX_FILE_MB = 5;
 const TOTAL_STEPS = 4;
 
@@ -148,7 +148,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
       payload.append("modules_json", JSON.stringify(modulesPayload));
 
       // Do not set Content-Type: the browser adds the multipart boundary
-      const res = await fetch(`${API_URL}/api/courses/`, {
+      const res = await fetch(resolveApiUrl('/courses/'), {
         method: "POST",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),

@@ -2,26 +2,47 @@
  * API utility for making requests to the Django backend
  */
 
-export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
-  // Use absolute URL to point to Django backend
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-  const url = endpoint.startsWith("http") ? endpoint : `${baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+export function resolveApiUrl(path: string): string {
+  const rawBase = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api").trim().replace(/\/+$/, "");
+  const baseWithoutApi = rawBase.endsWith("/api") ? rawBase.slice(0, -4) : rawBase;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  if (normalizedPath.startsWith("/api/")) {
+    return `${baseWithoutApi}${normalizedPath}`;
+  }
+  return `${rawBase}${normalizedPath}`;
+}
 
-  // Read access token if exists (assuming it's stored in localStorage for now)
+export function resolveMediaUrl(url?: string | null): string {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url) || url.startsWith("blob:")) return url;
+  const origin = (process.env.NEXT_PUBLIC_BACKEND_ORIGIN || "http://localhost:8000").replace(/\/+$/, "");
+  return `${origin}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
+export function getClientAccessToken(): string {
+  if (typeof document === "undefined") return "";
+  const match = document.cookie.match(/(?:^|; )access_token=([^;]*)/);
+  if (match) return decodeURIComponent(match[1]);
+  if (typeof localStorage !== "undefined") {
+    return localStorage.getItem("accessToken") || localStorage.getItem("access_token") || "";
+  }
+  return "";
+}
+
+export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
+  const url = endpoint.startsWith("http") ? endpoint : resolveApiUrl(endpoint);
+
   let headers: HeadersInit = {
     "Content-Type": "application/json",
     ...options.headers,
   };
 
-  // Only add Authorization if running in browser and token exists
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("accessToken");
-    if (token) {
-      headers = {
-        ...headers,
-        Authorization: `Bearer ${token}`,
-      };
-    }
+  const token = getClientAccessToken();
+  if (token && !("Authorization" in (headers as Record<string, string>))) {
+    headers = {
+      ...headers,
+      Authorization: `Bearer ${token}`,
+    };
   }
 
   const response = await fetch(url, {

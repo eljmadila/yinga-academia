@@ -5,8 +5,7 @@ import { DollarSign, TrendingUp, Download, Calendar, ArrowUpRight, ArrowDownRigh
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { RevenueAreaChart } from "@/components/instructor/AnalyticsCharts";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { resolveApiUrl } from "@/lib/api";
 
 interface PayoutRequest {
   id: number;
@@ -53,10 +52,10 @@ export default function PayoutsClient({ token }: { token: string | undefined }) 
     if (!token) return;
     
     Promise.all([
-      fetch(`${API_URL}/api/analytics/instructor/`, {
+      fetch(resolveApiUrl('/analytics/instructor/'), {
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => res.json()),
-      fetch(`${API_URL}/api/instructors/payouts/`, {
+      fetch(resolveApiUrl('/instructor/payouts/'), {
         headers: { Authorization: `Bearer ${token}` }
       }).then(res => res.json())
     ])
@@ -81,7 +80,7 @@ export default function PayoutsClient({ token }: { token: string | undefined }) 
 
     setIsWithdrawing(true);
     try {
-      const res = await fetch(`${API_URL}/api/instructors/payouts/`, {
+      const res = await fetch(resolveApiUrl('/instructor/payouts/'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

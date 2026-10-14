@@ -6,8 +6,7 @@ import { SalesPerformanceChart, RevenueDistributionChart } from "@/components/in
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Link from "next/link";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { resolveApiUrl } from "@/lib/api";
 
 interface AnalyticsData {
   totalStudents: number;
@@ -52,7 +51,7 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
   useEffect(() => {
     if (!token) return;
     
-    fetch(`${API_URL}/api/analytics/instructor/`, {
+    fetch(resolveApiUrl('/analytics/instructor/'), {
       headers: {
         Authorization: `Bearer ${token}`
       }

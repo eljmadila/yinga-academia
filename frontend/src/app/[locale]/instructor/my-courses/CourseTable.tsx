@@ -14,6 +14,7 @@ import {
   Globe,
 } from "lucide-react";
 import Link from "next/link";
+import { resolveApiUrl } from "@/lib/api";
 
 interface Course {
   id: string | number;
@@ -98,7 +99,7 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
     const idStr = String(courseId);
     setIsDeleting(idStr);
     try {
-      const res = await fetch(`${API_URL}/api/courses/${idStr}/`, {
+      const res = await fetch(resolveApiUrl(`/courses/${idStr}/`), {
         method: "DELETE",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -122,7 +123,7 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
     const idStr = String(courseId);
     setIsPublishing(idStr);
     try {
-      const res = await fetch(`${API_URL}/api/courses/${idStr}/`, {
+      const res = await fetch(resolveApiUrl(`/courses/${idStr}/`), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

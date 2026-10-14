@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Search, Filter, Star, Clock, BookOpen } from "lucide-react";
 import { fetchApi } from "@/lib/api";
+import { Link } from "@/i18n/navigation";
 
 export default function Catalogue() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -259,12 +260,12 @@ export default function Catalogue() {
                     <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
                       Commencez à apprendre dès aujourd'hui.
                     </p>
-                    <a 
+                    <Link 
                       href={`/student/courses/${course.id}`}
                       className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-brand-600 hover:shadow-md dark:bg-white dark:text-gray-900 dark:hover:bg-brand-500 dark:hover:text-white w-full sm:w-auto text-center"
                     >
                       Voir le cours
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>
