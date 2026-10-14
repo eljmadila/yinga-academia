@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { MessageSquare, Search, CheckCircle2, Clock, Reply } from 'lucide-react';
-import { resolveApiUrl } from '@/lib/api';
+import { resolveApiUrl, getClientAccessToken } from '@/lib/api';
 
 interface Answer {
   id: string;
@@ -59,16 +59,28 @@ export default function QAClient({ token }: { token: string | undefined }) {
   const [filter, setFilter] = useState<"all" | "unanswered">("unanswered");
   const [replyBody, setReplyBody] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) return;
+    const activeToken = token || getClientAccessToken();
+    if (!activeToken) {
+      setLoading(false);
+      return;
+    }
     
+    setLoading(true);
     fetch(resolveApiUrl('/questions/'), {
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${activeToken}`
       }
     })
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) {
+        console.warn(`Questions fetch returned status: ${res.status}`);
+        return [];
+      }
+      return res.json();
+    })
     .then(data => {
       const list: Question[] = Array.isArray(data) ? data : (data?.results || []);
       setQuestions(list);
@@ -76,7 +88,13 @@ export default function QAClient({ token }: { token: string | undefined }) {
         setActiveQuestion(list[0]);
       }
     })
-    .catch(err => console.error("Failed to fetch questions:", err));
+    .catch(err => {
+      console.warn("Could not fetch questions (network or server error):", err);
+      setQuestions([]);
+    })
+    .finally(() => {
+      setLoading(false);
+    });
   }, [token]);
 
   const filteredQuestions = questions.filter(q => {
@@ -90,6 +108,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
 
   const handlePostReply = async () => {
     if (!activeQuestion || !replyBody.trim()) return;
+    const activeToken = token || getClientAccessToken();
     setIsSubmitting(true);
     
     try {
@@ -97,7 +116,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${activeToken}`
         },
         body: JSON.stringify({
           question: activeQuestion.id,
@@ -130,13 +149,14 @@ export default function QAClient({ token }: { token: string | undefined }) {
 
   const handleToggleResolve = async () => {
     if (!activeQuestion) return;
+    const activeToken = token || getClientAccessToken();
     
     try {
       const res = await fetch(resolveApiUrl(`/questions/${activeQuestion.id}/`), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${activeToken}`
         },
         body: JSON.stringify({
           is_resolved: !activeQuestion.is_resolved
@@ -249,7 +269,12 @@ export default function QAClient({ token }: { token: string | undefined }) {
           </div>
           
           <div className="overflow-y-auto flex-1 p-2 space-y-1">
-            {filteredQuestions.length === 0 ? (
+            {loading ? (
+              <div className="p-8 text-center text-gray-500">
+                <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                <p className="text-xs">Loading questions...</p>
+              </div>
+            ) : filteredQuestions.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
                 <p>No questions found.</p>
               </div>
