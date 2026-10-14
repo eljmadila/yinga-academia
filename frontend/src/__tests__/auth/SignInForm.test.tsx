@@ -72,8 +72,8 @@ let originalConsoleError: typeof console.error;
 beforeAll(() => {
   originalConsoleError = console.error;
   console.error = (...args: unknown[]) => {
-    if (typeof args[0] === "string" && args[0].includes("Not implemented: navigation")) return;
-    if (args[0] instanceof Error && args[0].message?.includes("Not implemented")) return;
+    const str = args.map((a) => (a instanceof Error ? `${a.message} ${a.stack}` : String(a))).join(" ");
+    if (str.includes("Not implemented: navigation") || str.includes("not implemented")) return;
     originalConsoleError(...args);
   };
 });
