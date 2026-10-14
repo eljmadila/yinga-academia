@@ -1,0 +1,64 @@
+import SignInForm from "@/components/auth/SignInForm";
+import type { Metadata } from "next";
+import Image from "next/image";
+import { getTranslations } from "next-intl/server";
+
+export const metadata: Metadata = {
+  title: "Login | Yinga Academia",
+  description: "Connectez-vous à votre compte",
+};
+
+export default async function Login() {
+  const t = await getTranslations("auth");
+
+  return (
+    <div className="flex min-h-screen bg-brand-50 dark:bg-gray-950">
+      <div className="relative hidden w-1/2 flex-col items-center justify-center overflow-hidden bg-brand-100 lg:flex dark:bg-gray-900">
+        <Image
+          src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1000&auto=format&fit=crop"
+          alt="Students learning"
+          fill
+          className="object-cover opacity-85"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-950/90 via-brand-900/70 to-brand-700/60" />
+
+        <div className="relative z-10 max-w-xl px-12 text-white">
+          <div className="mb-6 inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white/90 backdrop-blur-sm">
+            A learning journey built for growth
+          </div>
+          <h2 className="mb-4 text-4xl font-bold leading-tight text-white">{t("loginHeroTitle")}</h2>
+          <p className="mb-8 text-lg text-white/85">{t("loginHeroDescription")}</p>
+
+          <div className="grid gap-3 text-sm text-white/90 sm:grid-cols-2">
+            <div className="rounded-2xl border border-white/15 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="mb-2 text-lg font-semibold">Expert-led learning</div>
+              <p className="text-white/75">Practical programs designed for professionals and students.</p>
+            </div>
+            <div className="rounded-2xl border border-white/15 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="mb-2 text-lg font-semibold">Role-based access</div>
+              <p className="text-white/75">Student and instructor dashboards built around your learning path.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex w-full flex-col items-center justify-center p-6 lg:w-1/2">
+        <div className="w-full max-w-md">
+          <div className="mb-6 flex justify-center">
+            <Image
+              src="/images/logo/logo-yinga-full.png"
+              alt="Yinga Academia Logo"
+              width={220}
+              height={60}
+              className="h-30 w-auto object-contain drop-shadow-sm"
+            />
+          </div>
+          <div className="rounded-[28px] border border-gray-200 bg-white/90 p-6 shadow-[0_24px_80px_rgba(10,18,45,0.12)] backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/70 sm:p-10">
+            <SignInForm />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

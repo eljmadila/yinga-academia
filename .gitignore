@@ -1,0 +1,34 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+garbage_backup/
+.swc/
+.idea/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+env/
+myworld/
+.env
+.env.*
+!.env.example
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+
+# OS
+.DS_Store
+Thumbs.db

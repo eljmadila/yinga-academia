@@ -1,0 +1,21 @@
+{
+  "email": "Email address",
+  "emailPlaceholder": "you@example.com",
+  "requestTitle": "Reset your password",
+  "requestDescription": "Enter the email address on your account and we will send reset instructions.",
+  "emailSent": "If an account uses this email, password reset instructions have been sent.",
+  "sendInstructions": "Send reset instructions",
+  "sending": "Sending...",
+  "confirmTitle": "Choose a new password",
+  "confirmDescription": "Enter and confirm your new password to finish resetting your account.",
+  "newPassword": "New password",
+  "confirmPassword": "Confirm new password",
+  "resetPassword": "Reset password",
+  "resetting": "Updating password...",
+  "resetComplete": "Your password has been updated. You can now sign in.",
+  "invalidLink": "This reset link is missing information or has expired. Request a new one.",
+  "backToLogin": "Back to sign in",
+  "requestAnother": "Request another reset link",
+  "passwordMismatch": "The passwords do not match.",
+  "genericError": "We could not complete the request. Check the details and try again."
+}

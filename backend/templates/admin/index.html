@@ -1,0 +1,55 @@
+{% extends 'unfold/layouts/base.html' %}
+
+{% load i18n %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block content %}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-8">
+        {% for metric in metrics %}
+            <div class="border border-base-200 bg-white dark:border-base-800 dark:bg-base-900 p-5 rounded-default">
+                <div class="flex items-center justify-between">
+                    <span class="material-symbols-outlined text-primary-600">{{ metric.icon }}</span>
+                    <span class="text-2xl font-semibold text-font-important-light dark:text-font-important-dark">{{ metric.value }}</span>
+                </div>
+                <p class="mt-3 text-sm text-font-subtle-light dark:text-font-subtle-dark">{{ metric.label }}</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div class="border border-base-200 bg-white dark:border-base-800 dark:bg-base-900 p-5 rounded-default xl:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-semibold text-font-important-light dark:text-font-important-dark">Recent courses</h2>
+                <span class="text-sm text-font-subtle-light dark:text-font-subtle-dark">{{ completion_rate }}% completion rate</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-base-200 dark:border-base-800 text-left text-font-subtle-light dark:text-font-subtle-dark">
+                            <th class="py-3 font-medium">Course</th>
+                            <th class="py-3 font-medium">Instructor</th>
+                            <th class="py-3 font-medium">Lessons</th>
+                            <th class="py-3 font-medium">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for course in recent_courses %}
+                            <tr class="border-b border-base-100 dark:border-base-800/60">
+                                <td class="py-3 font-medium text-font-important-light dark:text-font-important-dark">{{ course.title }}</td>
+                                <td class="py-3">{{ course.instructor.email }}</td>
+                                <td class="py-3">{{ course.lesson_count }}</td>
+                                <td class="py-3">{% if course.is_published %}Published{% else %}Draft{% endif %}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="py-6 text-center text-font-subtle-light dark:text-font-subtle-dark">No courses yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div>
+            {% include "unfold/helpers/dashboard_default.html" %}
+        </div>
+    </div>
+{% endblock %}

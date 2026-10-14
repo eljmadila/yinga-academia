@@ -1,0 +1,21 @@
+{
+  "email": "Adresse e-mail",
+  "emailPlaceholder": "vous@exemple.com",
+  "requestTitle": "Réinitialiser votre mot de passe",
+  "requestDescription": "Saisissez l’adresse e-mail de votre compte pour recevoir les instructions de réinitialisation.",
+  "emailSent": "Si un compte utilise cette adresse, les instructions de réinitialisation ont été envoyées.",
+  "sendInstructions": "Envoyer les instructions",
+  "sending": "Envoi en cours...",
+  "confirmTitle": "Choisir un nouveau mot de passe",
+  "confirmDescription": "Saisissez et confirmez votre nouveau mot de passe pour terminer la réinitialisation.",
+  "newPassword": "Nouveau mot de passe",
+  "confirmPassword": "Confirmer le nouveau mot de passe",
+  "resetPassword": "Réinitialiser le mot de passe",
+  "resetting": "Mise à jour du mot de passe...",
+  "resetComplete": "Votre mot de passe a été mis à jour. Vous pouvez vous connecter.",
+  "invalidLink": "Ce lien de réinitialisation est incomplet ou expiré. Demandez-en un nouveau.",
+  "backToLogin": "Retour à la connexion",
+  "requestAnother": "Demander un autre lien",
+  "passwordMismatch": "Les mots de passe ne correspondent pas.",
+  "genericError": "La demande n’a pas abouti. Vérifiez les informations et réessayez."
+}
