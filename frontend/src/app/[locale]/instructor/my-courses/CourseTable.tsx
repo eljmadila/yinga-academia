@@ -14,7 +14,7 @@ import {
   Globe,
 } from "lucide-react";
 import Link from "next/link";
-import { resolveApiUrl } from "@/lib/api";
+import { resolveApiUrl, resolveMediaUrl, getClientAccessToken } from "@/lib/api";
 
 interface Course {
   id: string | number;
@@ -34,9 +34,13 @@ interface CourseTableProps {
 
 type Tab = "all" | "published" | "drafts";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const FALLBACK_THUMBNAIL =
-  "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=100&q=80";
+  "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=300&q=80";
+
+const getThumbnailUrl = (thumb?: string | null) => {
+  if (!thumb) return FALLBACK_THUMBNAIL;
+  return resolveMediaUrl(thumb) || FALLBACK_THUMBNAIL;
+};
 
 export default function CourseTable({ initialCourses, token }: CourseTableProps) {
   const [courses, setCourses] = useState<Course[]>(initialCourses);
@@ -58,10 +62,29 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
     setTimeout(() => setToast(null), 3000);
   };
 
-  // Keep local state in sync when the server component passes fresh data
+  // Keep local state in sync or fetch client-side if server cookies were empty
   useEffect(() => {
-    setCourses(initialCourses);
-  }, [initialCourses]);
+    if (initialCourses && initialCourses.length > 0) {
+      setCourses(initialCourses);
+      return;
+    }
+    const clientToken = token || getClientAccessToken();
+    if (clientToken) {
+      fetch(resolveApiUrl('/courses/my/'), {
+        headers: {
+          Authorization: `Bearer ${clientToken}`
+        }
+      })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        const list = Array.isArray(data) ? data : (data?.results || []);
+        if (list.length > 0) {
+          setCourses(list);
+        }
+      })
+      .catch(err => console.error("Client fetch courses/my failed:", err));
+    }
+  }, [initialCourses, token]);
 
   const confirmAction = (type: "delete" | "publish", courseId: string | number) => {
     if (type === "delete") {
@@ -226,9 +249,15 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-12 rounded-lg bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0 relative">
                           <img
-                            src={course.thumbnail || FALLBACK_THUMBNAIL}
+                            src={getThumbnailUrl(course.thumbnail)}
                             alt={course.title}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (target.src !== FALLBACK_THUMBNAIL) {
+                                target.src = FALLBACK_THUMBNAIL;
+                              }
+                            }}
                           />
                         </div>
                         <div>

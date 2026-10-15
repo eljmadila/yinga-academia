@@ -7,6 +7,7 @@ import {
   Lock, Star, Users, Signal, Target, MessageCircle, Download, Video, User,
 } from 'lucide-react';
 import EnrollButton from "./EnrollButton";
+import { resolveMediaUrl } from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -116,7 +117,15 @@ export default async function CourseOverviewPage({
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl overflow-hidden shadow-sm flex flex-col md:flex-row">
         <div className="md:w-5/12 lg:w-1/3 relative bg-gray-200 dark:bg-gray-900 min-h-[250px]">
           {course.thumbnail ? (
-            <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover absolute inset-0" />
+            <img 
+              src={resolveMediaUrl(course.thumbnail)} 
+              alt={course.title} 
+              className="w-full h-full object-cover absolute inset-0"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&q=80";
+              }}
+            />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-800">
               <BookOpen className="w-16 h-16 text-white/70" />

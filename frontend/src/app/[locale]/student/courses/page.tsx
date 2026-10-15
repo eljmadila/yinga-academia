@@ -2,6 +2,7 @@ import React from 'react';
 import { Award, BookOpen, BookX, PlayCircle, CheckCircle2, Clock } from 'lucide-react';
 import { cookies } from "next/headers";
 import Link from 'next/link';
+import { resolveMediaUrl } from '@/lib/api';
 
 export default async function MyCoursesPage() {
   const cookieStore = await cookies();
@@ -58,7 +59,7 @@ export default async function MyCoursesPage() {
                         <div className="flex items-center gap-4">
                           <div className="h-14 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 relative">
                             <img 
-                              src={enrollment.course_details.thumbnail || "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=500&q=80"} 
+                              src={resolveMediaUrl(enrollment.course_details.thumbnail) || "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=500&q=80"} 
                               alt={enrollment.course_details.title} 
                               className="h-full w-full object-cover" 
                             />

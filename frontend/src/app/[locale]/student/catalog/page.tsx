@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Search, Filter, Star, Clock, BookOpen } from "lucide-react";
-import { fetchApi } from "@/lib/api";
+import { fetchApi, resolveMediaUrl } from "@/lib/api";
 import { Link } from "@/i18n/navigation";
 
 export default function Catalogue() {
@@ -215,9 +215,16 @@ export default function Catalogue() {
               {/* Image */}
               <div className="relative h-44 md:h-auto md:w-64 shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800">
                 <img
-                  src={course.thumbnail || "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500&q=80"}
+                  src={resolveMediaUrl(course.thumbnail) || "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500&q=80"}
                   alt={course.title}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    const fallback = "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=500&q=80";
+                    if (target.src !== fallback) {
+                      target.src = fallback;
+                    }
+                  }}
                 />
                 <div className="absolute left-3 top-3 rounded bg-white/95 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-900 shadow-sm backdrop-blur-md dark:bg-gray-900/90 dark:text-white">
                   {course.category}
