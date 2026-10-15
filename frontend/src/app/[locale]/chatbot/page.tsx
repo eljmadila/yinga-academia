@@ -1,5 +1,5 @@
 import SupportPage from "../support/page";
 
 export default function ChatbotPage() {
-  return <SupportPage defaultTab="chat" />;
+  return <SupportPage />;
 }
