@@ -2,6 +2,8 @@
 # Exit immediately if a command exits with a non-zero status
 set -o errexit
 
+export DJANGO_SETTINGS_MODULE="yinga_project.settings"
+
 echo "--- Installing dependencies ---"
 pip install --upgrade pip
 pip install -r requirements.txt

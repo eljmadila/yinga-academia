@@ -411,13 +411,21 @@ if not DEBUG:
             'BACKEND_URL': BACKEND_URL,
         }.items() if not value
     ]
+    enforce_payment = env_bool('ENFORCE_PAYMENT_CONFIG', False)
     if missing_mpesa_settings:
-        raise RuntimeError(
-            f"Required payment settings are missing: {', '.join(missing_mpesa_settings)}."
+        if enforce_payment:
+            raise RuntimeError(
+                f"Required payment settings are missing: {', '.join(missing_mpesa_settings)}."
+            )
+        import logging
+        logging.getLogger(__name__).warning(
+            f"M-Pesa payment settings are not yet fully configured: {', '.join(missing_mpesa_settings)}. "
+            "Platform will run normally, but M-Pesa STK Push will return 503 until credentials are provided."
         )
-    callback_url_parts = urlparse(BACKEND_URL)
-    if callback_url_parts.scheme != 'https' or not callback_url_parts.netloc:
-        raise RuntimeError("BACKEND_URL must be a public HTTPS URL when DEBUG is disabled.")
+    elif BACKEND_URL:
+        callback_url_parts = urlparse(BACKEND_URL)
+        if callback_url_parts.scheme != 'https' or not callback_url_parts.netloc:
+            raise RuntimeError("BACKEND_URL must be a public HTTPS URL when DEBUG is disabled.")
 
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 
