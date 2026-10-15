@@ -13,6 +13,24 @@ logger = logging.getLogger(__name__)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+def api_root(request):
+    """
+    Public API root entry point.
+    """
+    return Response({
+        "service": "Yinga Academia API",
+        "status": "online",
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/api/health/",
+            "admin": "/admin/",
+            "courses": "/api/courses/",
+            "support": "/api/support/",
+        }
+    })
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def health_check(request):
     """
     Health check endpoint for Render/Kubernetes/uptime monitors.

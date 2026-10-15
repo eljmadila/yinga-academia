@@ -17,9 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from apps.yinga_app.views import health_check
+from apps.yinga_app.views import health_check, api_root
 
 urlpatterns = [
+    path('', api_root, name='api-root'),
     path('health/', health_check, name='health-check-root'),
     path('api/health/', health_check, name='health-check'),
     path('admin/', admin.site.urls),
