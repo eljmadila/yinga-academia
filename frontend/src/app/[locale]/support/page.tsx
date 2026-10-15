@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PublicNavbar from "@/components/public/PublicNavbar";
 import PublicFooter from "@/components/public/PublicFooter";
 import {
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useLocale } from "next-intl";
 import { toast } from "sonner";
+import { resolveApiUrl, getClientAccessToken } from "@/lib/api";
 
 export default function SupportPage() {
   const locale = useLocale();
@@ -30,6 +31,16 @@ export default function SupportPage() {
 
   // FAQ state
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  // Auto-prefill name and email if logged in
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      const matchName = document.cookie.match(/(?:^|; )user_name=([^;]*)/);
+      const matchEmail = document.cookie.match(/(?:^|; )user_email=([^;]*)/);
+      if (matchName && matchName[1]) setName(decodeURIComponent(matchName[1]));
+      if (matchEmail && matchEmail[1]) setEmail(decodeURIComponent(matchEmail[1]));
+    }
+  }, []);
 
   const faqs = [
     {
@@ -74,7 +85,7 @@ export default function SupportPage() {
     }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) {
       toast.error(isFrench ? "Veuillez remplir tous les champs obligatoires." : "Please fill in all required fields.");
@@ -82,15 +93,48 @@ export default function SupportPage() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const token = getClientAccessToken();
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(resolveApiUrl('/support/'), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          subject: subject === 'general' ? (isFrench ? 'Demande générale' : 'General inquiry') : subject,
+          category: subject,
+          message: message.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        setIsSent(true);
+        toast.success(
+          isFrench
+            ? "Message envoyé avec succès ! Notre équipe vous répondra sous 24h."
+            : "Message sent successfully! Our team will get back to you within 24h."
+        );
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        const errMsg =
+          errorData.detail ||
+          errorData.message ||
+          (isFrench ? "Une erreur est survenue lors de l'envoi." : "Failed to send your message.");
+        toast.error(errMsg);
+      }
+    } catch (err) {
+      console.error("Support form submission error:", err);
+      toast.error(isFrench ? "Erreur de connexion au serveur. Réessayez." : "Network error. Please try again.");
+    } finally {
       setIsSubmitting(false);
-      setIsSent(true);
-      toast.success(
-        isFrench
-          ? "Message envoyé avec succès ! Notre équipe vous répondra sous 24h."
-          : "Message sent successfully! Our team will get back to you within 24h."
-      );
-    }, 600);
+    }
   };
 
   return (

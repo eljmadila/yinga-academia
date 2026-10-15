@@ -1,10 +1,13 @@
 from django.db import connection
 from django.core.cache import cache
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, viewsets
 import logging
+
+from .models import SupportMessage
+from .serializers import SupportMessageSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -44,3 +47,25 @@ def health_check(request):
         "cache": "connected" if cache_ok else "disconnected",
         "errors": errors if errors else None,
     }, status=status_code)
+
+
+class SupportMessageViewSet(viewsets.ModelViewSet):
+    queryset = SupportMessage.objects.all()
+    serializer_class = SupportMessageSerializer
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return SupportMessage.objects.none()
+        if user.is_staff or getattr(user, 'role', None) == 'INSTRUCTOR':
+            return SupportMessage.objects.all()
+        return SupportMessage.objects.filter(user=user)
+
+    def perform_create(self, serializer):
+        user = self.request.user if self.request.user.is_authenticated else None
+        serializer.save(user=user)

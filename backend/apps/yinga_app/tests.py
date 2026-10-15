@@ -36,3 +36,77 @@ class HealthCheckEndpointTests(TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertEqual(response.data['status'], 'unhealthy')
         self.assertEqual(response.data['cache'], 'disconnected')
+
+
+class SupportMessageEndpointTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        from django.contrib.auth import get_user_model
+        self.user_model = get_user_model()
+        self.user = self.user_model.objects.create_user(
+            username='student_jean',
+            email='student@example.com',
+            first_name='Jean',
+            last_name='Dupont',
+            password='TestPassword123!',
+            role='STUDENT'
+        )
+        self.staff_user = self.user_model.objects.create_user(
+            username='admin_user',
+            email='admin@example.com',
+            first_name='Admin',
+            last_name='User',
+            password='TestPassword123!',
+            role='ADMIN',
+            is_staff=True
+        )
+
+    def test_anonymous_user_can_submit_support_message(self):
+        payload = {
+            'name': 'Visiteur Anonyme',
+            'email': 'visiteur@example.com',
+            'subject': 'Question sur le paiement M-Pesa',
+            'category': 'payment',
+            'message': 'Est-ce que M-Pesa RDC est supporté ?'
+        }
+        response = self.client.post('/api/support/', data=payload, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['name'], 'Visiteur Anonyme')
+        self.assertEqual(response.data['email'], 'visiteur@example.com')
+        self.assertEqual(response.data['category'], 'payment')
+        self.assertIsNone(response.data['user'])
+
+    def test_authenticated_user_associates_with_message(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            'name': 'Jean Dupont',
+            'email': 'student@example.com',
+            'subject': 'Problème certificat',
+            'category': 'certificate',
+            'message': 'Je ne vois pas mon certificat.'
+        }
+        response = self.client.post('/api/support/', data=payload, format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['user'], self.user.id)
+
+    def test_validation_fails_on_missing_required_fields(self):
+        payload = {
+            'name': '',
+            'email': 'not-an-email',
+            'message': '   '
+        }
+        response = self.client.post('/api/support/', data=payload, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('name', response.data)
+        self.assertIn('email', response.data)
+        self.assertIn('message', response.data)
+
+    def test_anonymous_user_cannot_list_support_messages(self):
+        response = self.client.get('/api/support/')
+        self.assertEqual(response.status_code, 401)
+
+    def test_staff_user_can_list_all_support_messages(self):
+        self.client.force_authenticate(user=self.staff_user)
+        response = self.client.get('/api/support/')
+        self.assertEqual(response.status_code, 200)
+

@@ -29,6 +29,7 @@ urlpatterns = [
     path('api/', include('apps.students.urls')),
     path('api/', include('apps.progress.urls')),
     path('api/instructor/', include('apps.instructors.urls')),
+    path('api/support/', include('apps.yinga_app.urls')),
 ]
 
 from django.conf import settings
