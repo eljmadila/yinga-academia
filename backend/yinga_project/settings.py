@@ -429,6 +429,11 @@ if not DEBUG:
 
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
 
+# Paystack Payment Gateway
+PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY', '')
+PAYSTACK_PUBLIC_KEY = os.getenv('PAYSTACK_PUBLIC_KEY', '')
+PAYSTACK_CURRENCY = os.getenv('PAYSTACK_CURRENCY', 'KES')
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

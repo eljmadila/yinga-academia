@@ -27,6 +27,7 @@ class Payment(models.Model):
     PAYMENT_METHOD_CHOICES = (
         ('FLUTTERWAVE', 'Flutterwave'),
         ('MPESA', 'M-Pesa Daraja'),
+        ('PAYSTACK', 'Paystack'),
     )
     STATUS_CHOICES = (
         ('PENDING', 'Pending'),

@@ -372,3 +372,152 @@ class MpesaCallbackVerificationTests(TestCase):
 		self.assertEqual(self.order.status, 'PENDING')
 		self.assertFalse(Enrollment.objects.filter(student=self.student, course=self.course).exists())
 
+
+class PaystackEndpointTests(TestCase):
+	def setUp(self):
+		user_model = get_user_model()
+		self.student = user_model.objects.create_user(
+			username='paystack_learner',
+			email='paystack_learner@example.com',
+			password='TestPassword123!',
+			role='STUDENT',
+		)
+		self.instructor = user_model.objects.create_user(
+			username='paystack_teacher',
+			email='paystack_teacher@example.com',
+			password='TestPassword123!',
+			role='INSTRUCTOR',
+		)
+		self.course = Course.objects.create(
+			instructor=self.instructor,
+			title='Django Mastery',
+			description='Learn Django from scratch',
+			category='Development',
+			price='50.00',
+			status='PUBLISHED',
+		)
+		self.free_course = Course.objects.create(
+			instructor=self.instructor,
+			title='Free Intro',
+			description='Introductory course',
+			category='Development',
+			price='0.00',
+			status='PUBLISHED',
+		)
+		self.client = APIClient()
+		self.client.force_authenticate(self.student)
+
+	@patch('apps.payments.views.PaystackClient')
+	def test_paystack_initialize_returns_auth_url_and_creates_records(self, mock_client_cls):
+		mock_client = mock_client_cls.return_value
+		mock_client.currency = 'KES'
+		mock_client.initialize_transaction.return_value = {
+			'authorization_url': 'https://checkout.paystack.com/test12345',
+			'access_code': 'test12345',
+			'reference': 'ref_test_001',
+		}
+
+		response = self.client.post(
+			'/api/payments/paystack/initialize/',
+			{'course_id': str(self.course.id)},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.data['authorization_url'], 'https://checkout.paystack.com/test12345')
+		self.assertTrue(Order.objects.filter(student=self.student, course=self.course, status='PENDING').exists())
+		self.assertTrue(Payment.objects.filter(payment_method='PAYSTACK', status='PENDING').exists())
+
+	def test_free_course_cannot_initialize_paystack(self):
+		response = self.client.post(
+			'/api/payments/paystack/initialize/',
+			{'course_id': str(self.free_course.id)},
+			format='json',
+		)
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('Free courses should use free enrollment', response.data['error'])
+
+	@patch('apps.payments.views.PaystackClient')
+	def test_paystack_verify_activates_enrollment(self, mock_client_cls):
+		mock_client = mock_client_cls.return_value
+		mock_client.verify_transaction.return_value = {
+			'status': True,
+			'data': {
+				'status': 'success',
+				'amount': 5000, # 50.00 * 100
+				'id': 987654321,
+				'reference': 'ref_test_verify',
+			}
+		}
+
+		order = Order.objects.create(
+			student=self.student,
+			course=self.course,
+			amount='50.00',
+			status='PENDING'
+		)
+		payment = Payment.objects.create(
+			order=order,
+			payment_method='PAYSTACK',
+			payment_reference='ref_test_verify',
+			amount='50.00',
+			currency='KES',
+			status='PENDING'
+		)
+
+		response = self.client.get('/api/payments/paystack/verify/ref_test_verify/')
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.data['status'], 'success')
+		order.refresh_from_db()
+		payment.refresh_from_db()
+		self.assertEqual(order.status, 'COMPLETED')
+		self.assertEqual(payment.status, 'SUCCESSFUL')
+		self.assertEqual(payment.transaction_id, '987654321')
+		self.assertTrue(Enrollment.objects.filter(student=self.student, course=self.course, status='ACTIVE').exists())
+
+	@patch('apps.payments.views.PaystackClient')
+	def test_paystack_webhook_completes_order_and_enrolls(self, mock_client_cls):
+		mock_client = mock_client_cls.return_value
+		mock_client.verify_webhook_signature.return_value = True
+
+		order = Order.objects.create(
+			student=self.student,
+			course=self.course,
+			amount='50.00',
+			status='PENDING'
+		)
+		payment = Payment.objects.create(
+			order=order,
+			payment_method='PAYSTACK',
+			payment_reference='webhook_ref_999',
+			amount='50.00',
+			currency='KES',
+			status='PENDING'
+		)
+
+		webhook_payload = {
+			'event': 'charge.success',
+			'data': {
+				'reference': 'webhook_ref_999',
+				'amount': 5000,
+				'id': 11223344,
+			}
+		}
+
+		self.client.logout()
+		response = self.client.post(
+			'/api/payments/paystack/webhook/',
+			data=webhook_payload,
+			format='json',
+			HTTP_X_PAYSTACK_SIGNATURE='valid_mock_signature'
+		)
+
+		self.assertEqual(response.status_code, 200)
+		order.refresh_from_db()
+		payment.refresh_from_db()
+		self.assertEqual(order.status, 'COMPLETED')
+		self.assertEqual(payment.status, 'SUCCESSFUL')
+		self.assertTrue(Enrollment.objects.filter(student=self.student, course=self.course, status='ACTIVE').exists())
+
+

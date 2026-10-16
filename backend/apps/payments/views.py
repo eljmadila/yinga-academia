@@ -12,6 +12,7 @@ from .models import Order, Payment
 from apps.students.models import Enrollment
 from .mpesa import MpesaClient
 from .flutterwave import FlutterwaveClient
+from .paystack import PaystackClient
 from .throttles import MpesaInitiationRateThrottle
 
 logger = logging.getLogger(__name__)
@@ -357,3 +358,201 @@ def mpesa_webhook(request):
     except Exception as e:
         logger.error(f"M-Pesa Webhook processing error: {str(e)}", exc_info=True)
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def paystack_initialize(request):
+    try:
+        course_id = request.data.get('course_id')
+        if not course_id:
+            return Response({'error': 'course_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        course = get_object_or_404(Course, id=course_id)
+        user = request.user
+
+        if course.price <= 0:
+            return Response({'error': 'Free courses should use free enrollment.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if Enrollment.objects.filter(student=user, course=course).exists():
+            return Response({'error': 'Already enrolled in this course'}, status=status.HTTP_400_BAD_REQUEST)
+
+        client = PaystackClient()
+
+        # Create Order
+        order = Order.objects.create(
+            student=user,
+            course=course,
+            amount=course.price,
+            status='PENDING'
+        )
+
+        import uuid
+        tx_ref = f"paystack_{user.id}_{course.id}_{uuid.uuid4().hex[:10]}"
+
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000').rstrip('/')
+        callback_url = f"{frontend_url}/student/checkout/success?order_id={order.id}&courseId={course.id}&reference={tx_ref}"
+
+        # Amount in subunits (cents / kobo: price * 100)
+        amount_in_subunits = int(Decimal(str(course.price)) * 100)
+
+        metadata = {
+            'order_id': str(order.id),
+            'course_id': str(course.id),
+            'student_id': str(user.id),
+            'course_title': course.title,
+        }
+
+        init_data = client.initialize_transaction(
+            email=user.email,
+            amount_in_subunits=amount_in_subunits,
+            reference=tx_ref,
+            callback_url=callback_url,
+            metadata=metadata
+        )
+
+        # Create Payment record
+        Payment.objects.create(
+            order=order,
+            payment_method='PAYSTACK',
+            payment_reference=tx_ref,
+            amount=course.price,
+            currency=client.currency,
+            status='PENDING'
+        )
+
+        return Response({
+            'authorization_url': init_data.get('authorization_url'),
+            'access_code': init_data.get('access_code'),
+            'reference': tx_ref,
+            'order_id': str(order.id),
+        })
+
+    except ImproperlyConfigured:
+        return Response({'error': 'Paystack payment provider is not configured.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except Exception as e:
+        logger.error(f"Paystack initialize error: {str(e)}", exc_info=True)
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([permissions.IsAuthenticated])
+def paystack_verify(request, reference):
+    try:
+        payment = get_object_or_404(Payment, payment_reference=reference, payment_method='PAYSTACK')
+        order = payment.order
+
+        # Security check: order belongs to current user or staff
+        if order.student_id != request.user.id and not request.user.is_staff:
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+
+        # If already successful, return immediately
+        if payment.status == 'SUCCESSFUL':
+            return Response({
+                'status': 'success',
+                'order_id': str(order.id),
+                'course_id': str(order.course_id),
+                'message': 'Payment already verified successfully.'
+            })
+
+        client = PaystackClient()
+        verification = client.verify_transaction(reference)
+
+        if not verification or not verification.get('status'):
+            return Response({
+                'status': 'failed',
+                'error': 'Verification failed from Paystack'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        data = verification.get('data', {})
+        gateway_status = data.get('status')
+
+        if gateway_status == 'success':
+            verified_amount = Decimal(str(data.get('amount', 0))) / Decimal('100')
+            if verified_amount < payment.amount:
+                logger.error(f"Paystack underpayment detected: expected {payment.amount}, received {verified_amount}")
+                payment.status = 'FAILED'
+                payment.save()
+                order.status = 'FAILED'
+                order.save()
+                return Response({'error': 'Payment amount mismatch'}, status=status.HTTP_400_BAD_REQUEST)
+
+            with transaction.atomic():
+                payment.status = 'SUCCESSFUL'
+                payment.transaction_id = str(data.get('id', ''))
+                payment.metadata = verification
+                payment.save()
+
+                order.status = 'COMPLETED'
+                order.save()
+
+                Enrollment.objects.get_or_create(
+                    student_id=order.student_id,
+                    course_id=order.course_id,
+                    defaults={'status': 'ACTIVE'}
+                )
+
+            return Response({
+                'status': 'success',
+                'order_id': str(order.id),
+                'course_id': str(order.course_id),
+            })
+        else:
+            return Response({
+                'status': gateway_status or 'pending',
+                'order_id': str(order.id),
+                'gateway_response': data.get('gateway_response')
+            })
+
+    except Exception as e:
+        logger.error(f"Paystack verify error: {str(e)}", exc_info=True)
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def paystack_webhook(request):
+    try:
+        client = PaystackClient()
+        signature = request.headers.get('x-paystack-signature')
+        if not client.verify_webhook_signature(request.body, signature):
+            return Response({'error': 'Invalid signature'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        payload = request.data
+        event = payload.get('event')
+        data = payload.get('data', {})
+
+        if event == 'charge.success':
+            reference = data.get('reference')
+            if not reference:
+                return Response({'status': 'ignored'}, status=status.HTTP_200_OK)
+
+            try:
+                payment = Payment.objects.get(payment_reference=reference, payment_method='PAYSTACK')
+            except Payment.DoesNotExist:
+                logger.warning(f"Paystack payment record not found for webhook reference: {reference}")
+                return Response({'status': 'not_found'}, status=status.HTTP_200_OK)
+
+            if payment.status != 'SUCCESSFUL':
+                with transaction.atomic():
+                    payment.status = 'SUCCESSFUL'
+                    payment.transaction_id = str(data.get('id', ''))
+                    payment.metadata = payload
+                    payment.save()
+
+                    order = payment.order
+                    order.status = 'COMPLETED'
+                    order.save()
+
+                    Enrollment.objects.get_or_create(
+                        student_id=order.student_id,
+                        course_id=order.course_id,
+                        defaults={'status': 'ACTIVE'}
+                    )
+
+        return Response({'status': 'success'}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Paystack webhook error: {str(e)}", exc_info=True)
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

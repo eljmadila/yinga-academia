@@ -6,10 +6,14 @@ export default async function CheckoutSuccessPage({
 	searchParams,
 }: {
 	params: Promise<{ locale: string }>;
-	searchParams: Promise<{ order_id?: string }>;
+	searchParams: Promise<{ order_id?: string; reference?: string; trxref?: string }>;
 }) {
-	const [{ locale }, { order_id: orderId }] = await Promise.all([params, searchParams]);
+	const [{ locale }, query] = await Promise.all([params, searchParams]);
 	setRequestLocale(locale);
 
-	return <CheckoutStatus orderId={orderId ?? null} />;
+	const orderId = query.order_id ?? null;
+	const reference = query.reference || query.trxref || null;
+
+	return <CheckoutStatus orderId={orderId} reference={reference} />;
 }
+

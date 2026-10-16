@@ -18,11 +18,34 @@ function getCookieValue(name: string) {
   return match ? decodeURIComponent(match[2]) : null;
 }
 
-export default function CheckoutStatus({ orderId }: { orderId: string | null }) {
+export default function CheckoutStatus({
+  orderId,
+  reference,
+}: {
+  orderId: string | null;
+  reference?: string | null;
+}) {
   const t = useTranslations("student.checkout");
   const [order, setOrder] = useState<CheckoutOrder | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(!orderId);
+
+  // Trigger Paystack verification immediately if reference was returned in callback
+  useEffect(() => {
+    if (!reference) return;
+    const verifyPaystack = async () => {
+      try {
+        const token = getCookieValue("access_token");
+        await fetch(`${API_URL}/payments/paystack/verify/${encodeURIComponent(reference)}/`, {
+          method: "GET",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+      } catch {
+        // Fallback to order polling
+      }
+    };
+    void verifyPaystack();
+  }, [reference]);
 
   useEffect(() => {
     if (!orderId) return;
