@@ -5,7 +5,11 @@ import { cookies } from "next/headers";
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://yinga-backend.onrender.com/api"
+    : "http://localhost:8000/api");
 
 async function getJson(url: string, token?: string) {
   try {

@@ -2,8 +2,15 @@
  * API utility for making requests to the Django backend
  */
 
+export const DEFAULT_API_URL = (
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://yinga-backend.onrender.com/api"
+    : "http://localhost:8000/api")
+).trim().replace(/\/+$/, "");
+
 export function resolveApiUrl(path: string): string {
-  const rawBase = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api").trim().replace(/\/+$/, "");
+  const rawBase = DEFAULT_API_URL;
   const baseWithoutApi = rawBase.endsWith("/api") ? rawBase.slice(0, -4) : rawBase;
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   if (normalizedPath.startsWith("/api/")) {
@@ -15,7 +22,12 @@ export function resolveApiUrl(path: string): string {
 export function resolveMediaUrl(url?: string | null): string {
   if (!url) return "";
   if (/^https?:\/\//i.test(url) || url.startsWith("blob:")) return url;
-  const origin = (process.env.NEXT_PUBLIC_BACKEND_ORIGIN || "http://localhost:8000").replace(/\/+$/, "");
+  const origin = (
+    process.env.NEXT_PUBLIC_BACKEND_ORIGIN ||
+    (process.env.NODE_ENV === "production"
+      ? "https://yinga-backend.onrender.com"
+      : "http://localhost:8000")
+  ).replace(/\/+$/, "");
   return `${origin}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 

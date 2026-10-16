@@ -26,7 +26,11 @@ export default function SignUpForm() {
 
     try {
       // 1. Register the user
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const API_BASE =
+        process.env.NEXT_PUBLIC_API_URL ||
+        (process.env.NODE_ENV === "production"
+          ? "https://yinga-backend.onrender.com/api"
+          : "http://localhost:8000/api");
       const registerRes = await fetch(`${API_BASE}/auth/register/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

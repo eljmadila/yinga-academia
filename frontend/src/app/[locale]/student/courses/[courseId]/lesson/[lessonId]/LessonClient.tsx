@@ -9,8 +9,16 @@ import {
 import { useLocale } from 'next-intl';
 import VideoPlayer, { VideoPlayerHandle, formatTime } from './VideoPlayer';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-const BACKEND_ORIGIN = process.env.NEXT_PUBLIC_BACKEND_ORIGIN || "http://localhost:8000";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://yinga-backend.onrender.com/api"
+    : "http://localhost:8000/api");
+const BACKEND_ORIGIN =
+  process.env.NEXT_PUBLIC_BACKEND_ORIGIN ||
+  (process.env.NODE_ENV === "production"
+    ? "https://yinga-backend.onrender.com"
+    : "http://localhost:8000");
 const AUTO_COMPLETE_RATIO = 0.9;   // mark complete after 90% watched
 const SAVE_INTERVAL_SEC = 10;      // persist timecode every 10s of playback
 const NEXT_COUNTDOWN_SEC = 5;

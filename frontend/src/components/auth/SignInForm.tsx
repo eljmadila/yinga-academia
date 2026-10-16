@@ -22,7 +22,11 @@ export default function SignInForm() {
     setError("");
 
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+      const API_BASE =
+        process.env.NEXT_PUBLIC_API_URL ||
+        (process.env.NODE_ENV === "production"
+          ? "https://yinga-backend.onrender.com/api"
+          : "http://localhost:8000/api");
       const response = await fetch(`${API_BASE}/auth/login/`, {
         method: "POST",
         headers: {

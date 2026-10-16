@@ -19,6 +19,7 @@ myworld/
 .env
 .env.*
 !.env.example
+!frontend/.env.production
 
 # Django
 *.log

@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://yinga-backend.onrender.com/api"
+    : "http://localhost:8000/api");
 
 type CheckoutOrder = {
   course_id: string;

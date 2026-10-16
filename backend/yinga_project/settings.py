@@ -27,8 +27,11 @@ if not SECRET_KEY:
         raise RuntimeError("DJANGO_SECRET_KEY must be configured when DEBUG is disabled.")
     SECRET_KEY = "django-insecure-local-development-only"
 
-ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,backend")
-if not DEBUG and not os.getenv("DJANGO_ALLOWED_HOSTS"):
+ALLOWED_HOSTS = env_list(
+    "DJANGO_ALLOWED_HOSTS",
+    "localhost,127.0.0.1,backend,yinga-backend.onrender.com,.onrender.com",
+)
+if not DEBUG and not ALLOWED_HOSTS:
     raise RuntimeError("DJANGO_ALLOWED_HOSTS must be configured when DEBUG is disabled.")
 
 
@@ -314,8 +317,18 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
-CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "http://localhost:3000")
+CORS_ALLOWED_ORIGINS = env_list(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:3000,https://yinga-academia.vercel.app",
+)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https:\/\/.*\.vercel\.app$",
+]
+CSRF_TRUSTED_ORIGINS = env_list(
+    "CSRF_TRUSTED_ORIGINS",
+    "http://localhost:3000,https://yinga-academia.vercel.app,https://*.vercel.app,https://yinga-backend.onrender.com",
+)
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = DEBUG and env_bool("CORS_ALLOW_ALL_ORIGINS", False)
 if not DEBUG and not CORS_ALLOWED_ORIGINS:
     raise RuntimeError("CORS_ALLOWED_ORIGINS must be configured when DEBUG is disabled.")
@@ -392,7 +405,7 @@ MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY', '')
 MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET', '')
 MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE', '')
 MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', '')
-BACKEND_URL = os.getenv('BACKEND_URL', '').rstrip('/')
+BACKEND_URL = os.getenv('BACKEND_URL', 'https://yinga-backend.onrender.com' if not DEBUG else '').rstrip('/')
 MAX_VIDEO_UPLOAD_BYTES = int(os.getenv('MAX_VIDEO_UPLOAD_BYTES', str(1024 ** 3)))
 MAX_VIDEO_CHUNK_BYTES = int(os.getenv('MAX_VIDEO_CHUNK_BYTES', str(5 * 1024 ** 2)))
 MAX_COURSE_THUMBNAIL_BYTES = int(os.getenv('MAX_COURSE_THUMBNAIL_BYTES', str(5 * 1024 ** 2)))
@@ -427,7 +440,7 @@ if not DEBUG:
         if callback_url_parts.scheme != 'https' or not callback_url_parts.netloc:
             raise RuntimeError("BACKEND_URL must be a public HTTPS URL when DEBUG is disabled.")
 
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://yinga-academia.vercel.app' if not DEBUG else 'http://localhost:3000').rstrip('/')
 
 # Paystack Payment Gateway
 PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY', '')

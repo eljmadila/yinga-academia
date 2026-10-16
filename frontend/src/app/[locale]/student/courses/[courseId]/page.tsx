@@ -9,7 +9,11 @@ import {
 import EnrollButton from "./EnrollButton";
 import { resolveMediaUrl } from "@/lib/api";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://yinga-backend.onrender.com/api"
+    : "http://localhost:8000/api");
 
 async function getJson(url: string, token?: string) {
   try {
