@@ -14,6 +14,7 @@ import SignInForm from "@/components/auth/SignInForm";
 
 jest.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => "en",
 }));
 
 jest.mock("@/i18n/navigation", () => ({

@@ -18,6 +18,7 @@ import CheckoutStatus from "@/app/[locale]/student/checkout/success/CheckoutStat
 
 jest.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
+  useLocale: () => "en",
 }));
 
 jest.mock("@/i18n/navigation", () => ({
