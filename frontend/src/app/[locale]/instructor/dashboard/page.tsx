@@ -12,7 +12,13 @@ export const metadata: Metadata = {
   description: "Vue d'ensemble de vos performances",
 };
 
-export default async function InstructorDashboard() {
+export default async function InstructorDashboard({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const isFrench = locale === "fr";
   const t = await getTranslations("instructorDashboard");
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token")?.value;
@@ -106,7 +112,7 @@ export default async function InstructorDashboard() {
         <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
           <div className="flex items-center justify-between">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400">
-              <span className="text-xl font-bold">$</span>
+              <span className="text-xl font-bold">€</span>
             </div>
             {monthlyRevenue > 0 && (
               <span className="flex items-center gap-1 text-sm font-medium text-green-500">
@@ -115,8 +121,10 @@ export default async function InstructorDashboard() {
             )}
           </div>
           <div className="mt-4">
-            <h4 className="text-3xl font-bold text-gray-800 dark:text-white/90">${totalRevenue.toFixed(2)}</h4>
-            <p className="text-sm font-medium text-gray-500 mt-1">{t("monthlyRevenue")} (${monthlyRevenue.toFixed(2)} this month)</p>
+            <h4 className="text-3xl font-bold text-gray-800 dark:text-white/90">€{totalRevenue.toFixed(2)}</h4>
+            <p className="text-sm font-medium text-gray-500 mt-1">
+              {t("monthlyRevenue")} ({isFrench ? `${monthlyRevenue.toFixed(2)} € ce mois` : `€${monthlyRevenue.toFixed(2)} this month`})
+            </p>
           </div>
         </div>
 
@@ -159,12 +167,16 @@ export default async function InstructorDashboard() {
                   <span className="text-xs text-gray-400">{review.date}</span>
                 </div>
                 <p className="text-sm text-gray-700 dark:text-gray-300 font-medium line-clamp-3">&quot;{review.comment}&quot;</p>
-                <p className="text-xs text-gray-500 mt-2">{review.student_name} on <span className="font-semibold text-gray-700 dark:text-gray-300">{review.course_title}</span></p>
+                <p className="text-xs text-gray-500 mt-2">
+                  {review.student_name} {isFrench ? "sur" : "on"} <span className="font-semibold text-gray-700 dark:text-gray-300">{review.course_title}</span>
+                </p>
               </div>
             )) : (
               <div className="text-center py-8">
                 <Star className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-500 dark:text-gray-400 text-sm">No reviews yet.</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  {isFrench ? "Aucun avis pour le moment." : "No reviews yet."}
+                </p>
               </div>
             )}
           </div>

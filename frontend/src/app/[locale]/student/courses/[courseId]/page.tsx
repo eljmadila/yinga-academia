@@ -1,7 +1,7 @@
 import React from 'react';
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import {
   PlayCircle, Clock, Award, BookOpen, CheckCircle, ChevronRight, Play, FileText,
   Lock, Star, Users, Signal, Target, MessageCircle, Download, Video, User,
@@ -10,24 +10,6 @@ import EnrollButton from "./EnrollButton";
 import { resolveMediaUrl } from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
-
-const LEVEL_LABELS: Record<string, string> = {
-  BEGINNER: "Beginner",
-  INTERMEDIATE: "Intermediate",
-  ADVANCED: "Advanced",
-};
-
-// Maps Course.course_includes keys (backend) to display info
-const INCLUDES_MAP: Record<string, { label: string; icon: React.ElementType }> = {
-  LIFETIME_ACCESS: { label: "Full lifetime access", icon: CheckCircle },
-  CERTIFICATE: { label: "Certificate of completion", icon: Award },
-  DOWNLOADABLE_RESOURCES: { label: "Downloadable resources", icon: Download },
-  COMMUNITY_SUPPORT: { label: "Community support", icon: Users },
-  LIVE_QA: { label: "Live Q&A sessions", icon: MessageCircle },
-  PROJECT_REVIEW: { label: "Project review", icon: FileText },
-  ONE_ON_ONE: { label: "One-on-one mentoring", icon: User },
-  QUIZZES: { label: "Quizzes & exercises", icon: Target },
-};
 
 async function getJson(url: string, token?: string) {
   try {
@@ -53,7 +35,8 @@ export default async function CourseOverviewPage({
 }: { 
   params: Promise<{ locale: string; courseId: string }> 
 }) {
-  const { courseId } = await params;
+  const { locale, courseId } = await params;
+  const isFrench = locale === "fr";
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token")?.value;
 
@@ -81,7 +64,7 @@ export default async function CourseOverviewPage({
   const modules: any[] = [...(course.modules || [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const orphanLessons = (course.lessons || []).filter((l: any) => !l.module);
   if (orphanLessons.length > 0) {
-    modules.push({ id: "orphan", title: "Additional lessons", lessons: orphanLessons });
+    modules.push({ id: "orphan", title: isFrench ? "Leçons supplémentaires" : "Additional lessons", lessons: orphanLessons });
   }
   const allLessons: any[] = modules.flatMap((m) => m.lessons || []);
 
@@ -93,7 +76,7 @@ export default async function CourseOverviewPage({
   const nextLesson = allLessons.find((l) => !completedLessonIds.has(String(l.id))) || allLessons[0];
 
   const instructor = course.instructor || {};
-  const instructorName = `${instructor.first_name || ""} ${instructor.last_name || ""}`.trim() || "Instructor";
+  const instructorName = `${instructor.first_name || ""} ${instructor.last_name || ""}`.trim() || (isFrench ? "Formateur" : "Instructor");
   const objectives: string[] = Array.isArray(course.learning_objectives) ? course.learning_objectives.filter(Boolean) : [];
   const includes: string[] = Array.from(new Set([
     "CERTIFICATE",
@@ -102,12 +85,29 @@ export default async function CourseOverviewPage({
   const reviewList: any[] = Array.isArray(reviews) ? reviews : [];
   const price = Number(course.price) || 0;
 
+  const levelLabels: Record<string, string> = {
+    BEGINNER: isFrench ? "Débutant" : "Beginner",
+    INTERMEDIATE: isFrench ? "Intermédiaire" : "Intermediate",
+    ADVANCED: isFrench ? "Avancé" : "Advanced",
+  };
+
+  const includesMap: Record<string, { label: string; icon: React.ElementType }> = {
+    LIFETIME_ACCESS: { label: isFrench ? "Accès à vie complet" : "Full lifetime access", icon: CheckCircle },
+    CERTIFICATE: { label: isFrench ? "Certificat de fin de formation" : "Certificate of completion", icon: Award },
+    DOWNLOADABLE_RESOURCES: { label: isFrench ? "Ressources téléchargeables" : "Downloadable resources", icon: Download },
+    COMMUNITY_SUPPORT: { label: isFrench ? "Support de la communauté" : "Community support", icon: Users },
+    LIVE_QA: { label: isFrench ? "Sessions Q&R en direct" : "Live Q&A sessions", icon: MessageCircle },
+    PROJECT_REVIEW: { label: isFrench ? "Revue de projets pratiques" : "Project review", icon: FileText },
+    ONE_ON_ONE: { label: isFrench ? "Mentorat individuel" : "One-on-one mentoring", icon: User },
+    QUIZZES: { label: isFrench ? "Quiz et exercices pratiques" : "Quizzes & exercises", icon: Target },
+  };
+
   return (
     <div className="flex flex-col max-w-6xl mx-auto gap-8 pb-12">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
         <Link href={isEnrolled ? "/student/courses" : "/student/catalog"} className="hover:text-brand-600 dark:hover:text-brand-400">
-          {isEnrolled ? "My Courses" : "Catalog"}
+          {isEnrolled ? (isFrench ? "Mes Formations" : "My Courses") : (isFrench ? "Catalogue" : "Catalog")}
         </Link>
         <ChevronRight className="w-4 h-4" />
         <span className="text-gray-900 dark:text-white font-medium line-clamp-1">{course.title}</span>
@@ -134,7 +134,7 @@ export default async function CourseOverviewPage({
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6 gap-2">
             {course.category && (
               <span className="px-3 py-1 bg-white/20 backdrop-blur-md border border-white/30 text-white rounded-full text-xs font-semibold uppercase tracking-wider">
-                {course.category}
+                {typeof course.category === "object" ? course.category?.name : course.category}
               </span>
             )}
           </div>
@@ -145,7 +145,7 @@ export default async function CourseOverviewPage({
             {course.title}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
-            By <span className="font-semibold text-gray-900 dark:text-gray-200">{instructorName}</span>
+            {isFrench ? "Par" : "By"} <span className="font-semibold text-gray-900 dark:text-gray-200">{instructorName}</span>
             {instructor.title && <span className="text-gray-500"> · {instructor.title}</span>}
           </p>
 
@@ -153,17 +153,17 @@ export default async function CourseOverviewPage({
             <div className="flex items-center gap-1.5">
               <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
               <span className="font-semibold text-gray-900 dark:text-white">
-                {course.reviews_count > 0 ? course.average_rating : "New"}
+                {course.reviews_count > 0 ? course.average_rating : (isFrench ? "Nouveau" : "New")}
               </span>
-              {course.reviews_count > 0 && <span>({course.reviews_count} reviews)</span>}
+              {course.reviews_count > 0 && <span>({course.reviews_count} {isFrench ? "avis" : "reviews"})</span>}
             </div>
             <div className="flex items-center gap-1.5">
               <Users className="w-4 h-4 text-purple-500" />
-              <span>{course.enrollments_count || 0} students</span>
+              <span>{course.enrollments_count || 0} {isFrench ? "étudiants" : "students"}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Signal className="w-4 h-4 text-teal-500" />
-              <span>{LEVEL_LABELS[course.level] || course.level}</span>
+              <span>{levelLabels[course.level] || course.level}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-blue-500" />
@@ -171,7 +171,7 @@ export default async function CourseOverviewPage({
             </div>
             <div className="flex items-center gap-1.5">
               <BookOpen className="w-4 h-4 text-orange-500" />
-              <span>{totalLessons} lessons</span>
+              <span>{totalLessons} {isFrench ? "leçons" : "lessons"}</span>
             </div>
           </div>
 
@@ -185,21 +185,31 @@ export default async function CourseOverviewPage({
                     className="w-full sm:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
                   >
                     <PlayCircle className="w-5 h-5" />
-                    {isCompleted ? "Review Course" : progress > 0 ? "Resume Course" : "Start Learning"}
+                    {isCompleted
+                      ? (isFrench ? "Revoir le cours" : "Review Course")
+                      : progress > 0
+                        ? (isFrench ? "Reprendre le cours" : "Resume Course")
+                        : (isFrench ? "Commencer le cours" : "Start Learning")}
                   </Link>
                 ) : (
-                  <span className="text-sm text-gray-500">No lessons published yet.</span>
+                  <span className="text-sm text-gray-500">
+                    {isFrench ? "Aucune leçon publiée pour l'instant." : "No lessons published yet."}
+                  </span>
                 )}
 
                 <div className="w-full sm:flex-1 max-w-xs space-y-2">
                   <div className="flex justify-between text-sm font-medium">
-                    <span className="text-gray-700 dark:text-gray-300">Your Progress</span>
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {isFrench ? "Votre progression" : "Your Progress"}
+                    </span>
                     <span className="text-brand-600 dark:text-brand-400">{progress}%</span>
                   </div>
                   <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
                     <div className="h-full bg-brand-500 rounded-full transition-all duration-1000" style={{ width: `${progress}%` }}></div>
                   </div>
-                  <p className="text-xs text-gray-500">{completedLessonIds.size} of {totalLessons} lessons completed</p>
+                  <p className="text-xs text-gray-500">
+                    {completedLessonIds.size} {isFrench ? "sur" : "of"} {totalLessons} {isFrench ? "leçons terminées" : "lessons completed"}
+                  </p>
                 </div>
 
                 {isCompleted && (
@@ -207,7 +217,7 @@ export default async function CourseOverviewPage({
                     href={`/student/courses/${course.id}/certificate`}
                     className="flex items-center gap-2 text-sm font-semibold text-green-600 hover:text-green-700"
                   >
-                    <Award className="w-5 h-5" /> Certificate
+                    <Award className="w-5 h-5" /> {isFrench ? "Certificat" : "Certificate"}
                   </Link>
                 )}
               </>
@@ -224,7 +234,9 @@ export default async function CourseOverviewPage({
           {/* Learning objectives */}
           {objectives.length > 0 && (
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 md:p-8 shadow-sm">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">What You'll Learn</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                {isFrench ? "Ce que vous allez apprendre" : "What You'll Learn"}
+              </h2>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {objectives.map((obj, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
@@ -238,22 +250,28 @@ export default async function CourseOverviewPage({
 
           {/* About */}
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 md:p-8 shadow-sm">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">About This Course</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              {isFrench ? "À propos de ce cours" : "About This Course"}
+            </h2>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap text-sm md:text-base">
-              {course.description || "No description provided for this course."}
+              {course.description || (isFrench ? "Aucune description fournie pour ce cours." : "No description provided for this course.")}
             </p>
           </div>
 
           {/* Syllabus */}
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 md:p-8 shadow-sm">
             <div className="flex items-baseline justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Course Syllabus</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {isFrench ? "Programme de la formation" : "Course Syllabus"}
+              </h2>
               <span className="text-sm text-gray-500">
-                {modules.length} sections · {totalLessons} lessons · {formatDuration(totalDuration)}
+                {modules.length} {isFrench ? "sections" : "sections"} · {totalLessons} {isFrench ? "leçons" : "lessons"} · {formatDuration(totalDuration)}
               </span>
             </div>
             {modules.length === 0 ? (
-              <p className="text-sm text-gray-500">The syllabus for this course is not available yet.</p>
+              <p className="text-sm text-gray-500">
+                {isFrench ? "Le programme de ce cours n'est pas encore disponible." : "The syllabus for this course is not available yet."}
+              </p>
             ) : (
               <div className="space-y-4">
                 {modules.map((module: any, idx: number) => {
@@ -263,11 +281,13 @@ export default async function CourseOverviewPage({
                     <div key={module.id} className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-900/50">
                       <div className="p-4 md:p-5 flex items-center justify-between">
                         <div>
-                          <h3 className="font-bold text-gray-900 dark:text-white">Section {idx + 1}: {module.title}</h3>
+                          <h3 className="font-bold text-gray-900 dark:text-white">
+                            {isFrench ? "Section" : "Section"} {idx + 1}: {module.title}
+                          </h3>
                           {module.description && <p className="text-sm text-gray-500 mt-1">{module.description}</p>}
                         </div>
                         <span className="text-xs text-gray-500 whitespace-nowrap ml-4">
-                          {lessons.length} lessons · {formatDuration(moduleDuration)}
+                          {lessons.length} {isFrench ? "leçons" : "lessons"} · {formatDuration(moduleDuration)}
                         </span>
                       </div>
                       <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
@@ -288,7 +308,7 @@ export default async function CourseOverviewPage({
                               </span>
                               {lesson.is_free_preview && !isEnrolled && (
                                 <span className="text-[10px] font-semibold uppercase tracking-wide text-brand-600 bg-brand-50 dark:bg-brand-500/10 px-2 py-0.5 rounded">
-                                  Preview
+                                  {isFrench ? "Aperçu" : "Preview"}
                                 </span>
                               )}
                               <span className="text-xs text-gray-500">{lesson.duration_minutes || 0} min</span>
@@ -314,10 +334,12 @@ export default async function CourseOverviewPage({
           {/* Reviews */}
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 md:p-8 shadow-sm">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-              Student Reviews {reviewList.length > 0 && <span className="text-gray-400 font-normal">({reviewList.length})</span>}
+              {isFrench ? "Avis des étudiants" : "Student Reviews"} {reviewList.length > 0 && <span className="text-gray-400 font-normal">({reviewList.length})</span>}
             </h2>
             {reviewList.length === 0 ? (
-              <p className="text-sm text-gray-500">No reviews yet.</p>
+              <p className="text-sm text-gray-500">
+                {isFrench ? "Aucun avis pour l'instant. Soyez le premier !" : "No reviews yet. Be the first!"}
+              </p>
             ) : (
               <div className="space-y-5">
                 {reviewList.slice(0, 5).map((r: any) => (
@@ -342,14 +364,16 @@ export default async function CourseOverviewPage({
         {/* Sidebar */}
         <div className="space-y-6">
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">This Course Includes</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+              {isFrench ? "Cette formation comprend" : "This Course Includes"}
+            </h3>
             <ul className="space-y-4">
               <li className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
                 <Video className="w-5 h-5 text-gray-400" />
-                <span>{totalVideos} video lessons ({formatDuration(totalDuration)})</span>
+                <span>{totalVideos} {isFrench ? "leçons vidéo" : "video lessons"} ({formatDuration(totalDuration)})</span>
               </li>
               {includes.map((key) => {
-                const item = INCLUDES_MAP[key];
+                const item = includesMap[key];
                 if (!item) return null;
                 const Icon = item.icon;
                 return (
@@ -364,7 +388,9 @@ export default async function CourseOverviewPage({
 
           {/* Instructor */}
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Your Instructor</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+              {isFrench ? "Votre Formateur" : "Your Instructor"}
+            </h3>
             <div className="flex items-center gap-3 mb-4">
               {instructor.avatar ? (
                 <img src={instructor.avatar} alt={instructorName} className="w-12 h-12 rounded-full object-cover" />
@@ -381,15 +407,15 @@ export default async function CourseOverviewPage({
             <div className="grid grid-cols-3 gap-2 text-center mb-4">
               <div>
                 <p className="font-bold text-gray-900 dark:text-white">{instructor.average_rating || "–"}</p>
-                <p className="text-[11px] text-gray-500">Rating</p>
+                <p className="text-[11px] text-gray-500">{isFrench ? "Note" : "Rating"}</p>
               </div>
               <div>
                 <p className="font-bold text-gray-900 dark:text-white">{instructor.total_students ?? 0}</p>
-                <p className="text-[11px] text-gray-500">Students</p>
+                <p className="text-[11px] text-gray-500">{isFrench ? "Étudiants" : "Students"}</p>
               </div>
               <div>
                 <p className="font-bold text-gray-900 dark:text-white">{instructor.total_courses ?? 0}</p>
-                <p className="text-[11px] text-gray-500">Courses</p>
+                <p className="text-[11px] text-gray-500">{isFrench ? "Formations" : "Courses"}</p>
               </div>
             </div>
             {instructor.bio && <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-4">{instructor.bio}</p>}

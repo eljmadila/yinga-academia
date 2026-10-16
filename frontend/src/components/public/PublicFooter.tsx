@@ -1,10 +1,12 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 export default function PublicFooter() {
   const t = useTranslations("home");
+  const locale = useLocale();
+  const isFrench = locale === "fr";
 
   return (
     <footer className="w-full border-t border-gray-200 bg-white py-12 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
@@ -19,7 +21,9 @@ export default function PublicFooter() {
               />
             </Link>
             <p className="max-w-sm text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-              Yinga Academia est une plateforme d&apos;apprentissage moderne qui connecte étudiants et experts à travers des formations certifiantes et interactives.
+              {isFrench
+                ? "Yinga Academia est une plateforme d'apprentissage moderne qui connecte étudiants et experts à travers des formations certifiantes et interactives."
+                : "Yinga Academia is a modern e-learning platform connecting students and verified experts through interactive, career-focused courses."}
             </p>
           </div>
 
@@ -30,17 +34,17 @@ export default function PublicFooter() {
             <ul className="space-y-2.5">
               <li>
                 <Link href="/catalog" className="hover:text-brand-500 transition-colors">
-                  Catalogue des cours
+                  {isFrench ? "Catalogue des cours" : "Course Catalog"}
                 </Link>
               </li>
               <li>
                 <Link href="/student/dashboard" className="hover:text-brand-500 transition-colors">
-                  Espace Étudiant
+                  {isFrench ? "Espace Étudiant" : "Student Area"}
                 </Link>
               </li>
               <li>
                 <Link href="/instructor/dashboard" className="hover:text-brand-500 transition-colors">
-                  Espace Formateur
+                  {isFrench ? "Espace Formateur" : "Instructor Area"}
                 </Link>
               </li>
               <li>
@@ -53,7 +57,7 @@ export default function PublicFooter() {
 
           <div>
             <h4 className="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-900 dark:text-white">
-              Légal & Sécurité
+              {isFrench ? "Légal & Sécurité" : "Legal & Privacy"}
             </h4>
             <ul className="space-y-2.5">
               <li>
@@ -67,8 +71,8 @@ export default function PublicFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-brand-500 transition-colors">
-                  Assistance & Support
+                <Link href="/support" className="hover:text-brand-500 transition-colors">
+                  {isFrench ? "Assistance & Support" : "Help & Support"}
                 </Link>
               </li>
             </ul>

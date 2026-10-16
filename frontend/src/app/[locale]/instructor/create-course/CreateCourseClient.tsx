@@ -14,17 +14,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { resolveApiUrl } from "@/lib/api";
 
 const MAX_FILE_MB = 5;
 const TOTAL_STEPS = 4;
-
-const STEPS = [
-  { icon: FileText, label: "Basic Info", step: 1, title: "Basic Information" },
-  { icon: Video, label: "Curriculum", step: 2, title: "Curriculum" },
-  { icon: Settings, label: "Settings", step: 3, title: "Settings" },
-  { icon: CheckCircle2, label: "Publish", step: 4, title: "Publish" },
-];
 
 export type LessonState = {
   id: string;
@@ -39,13 +33,42 @@ export type ModuleState = {
 };
 
 export default function CreateCourseClient({ token }: { token: string | undefined }) {
+  const locale = useLocale();
+  const isFrench = locale === "fr";
   const router = useRouter();
+
+  const STEPS = [
+    {
+      icon: FileText,
+      label: isFrench ? "Infos" : "Basic Info",
+      step: 1,
+      title: isFrench ? "Informations de base" : "Basic Information",
+    },
+    {
+      icon: Video,
+      label: isFrench ? "Programme" : "Curriculum",
+      step: 2,
+      title: isFrench ? "Programme du cours" : "Curriculum",
+    },
+    {
+      icon: Settings,
+      label: isFrench ? "Paramètres" : "Settings",
+      step: 3,
+      title: isFrench ? "Paramètres du cours" : "Settings",
+    },
+    {
+      icon: CheckCircle2,
+      label: isFrench ? "Publier" : "Publish",
+      step: 4,
+      title: isFrench ? "Publication" : "Publish",
+    },
+  ];
 
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     category: "",
-    language: "en",
+    language: isFrench ? "fr" : "en",
     level: "BEGINNER",
     price: "0",
   });
@@ -92,7 +115,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
     if (target > 1 && !formData.title.trim()) {
       setCurrentStep(1);
       setValidationError(true);
-      showToast("Course Title is required", "error");
+      showToast(isFrench ? "Le titre de la formation est obligatoire" : "Course Title is required", "error");
       return;
     }
     setCurrentStep(Math.min(Math.max(target, 1), TOTAL_STEPS));
@@ -111,14 +134,14 @@ export default function CreateCourseClient({ token }: { token: string | undefine
     } catch {
       /* response was not JSON */
     }
-    return "Failed to save course";
+    return isFrench ? "Échec de l'enregistrement de la formation" : "Failed to save course";
   };
 
   const submitCourse = async (isDraft: boolean) => {
     if (!formData.title.trim()) {
       setCurrentStep(1);
       setValidationError(true);
-      showToast("Course Title is required", "error");
+      showToast(isFrench ? "Le titre de la formation est obligatoire" : "Course Title is required", "error");
       return;
     }
 
@@ -157,7 +180,12 @@ export default function CreateCourseClient({ token }: { token: string | undefine
       });
 
       if (res.ok) {
-        showToast(`Course ${isDraft ? "saved as draft" : "created"} successfully!`, "success");
+        showToast(
+          isFrench
+            ? `Formation ${isDraft ? "enregistrée en brouillon" : "créée"} avec succès !`
+            : `Course ${isDraft ? "saved as draft" : "created"} successfully!`,
+          "success"
+        );
         setTimeout(() => {
           router.push("/instructor/my-courses");
           router.refresh();
@@ -166,7 +194,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
         showToast(await parseError(res), "error");
       }
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "An error occurred", "error");
+      showToast(err instanceof Error ? err.message : (isFrench ? "Une erreur est survenue" : "An error occurred"), "error");
     } finally {
       setIsSubmitting(false);
       setIsDrafting(false);
@@ -176,11 +204,11 @@ export default function CreateCourseClient({ token }: { token: string | undefine
   const acceptFile = (file: File | undefined) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      showToast("Please choose an image file", "error");
+      showToast(isFrench ? "Veuillez choisir un fichier image" : "Please choose an image file", "error");
       return;
     }
     if (file.size > MAX_FILE_MB * 1024 * 1024) {
-      showToast(`Image must be smaller than ${MAX_FILE_MB} MB`, "error");
+      showToast(isFrench ? `L'image doit être inférieure à ${MAX_FILE_MB} Mo` : `Image must be smaller than ${MAX_FILE_MB} MB`, "error");
       return;
     }
     setSelectedFile(file);
@@ -278,16 +306,20 @@ export default function CreateCourseClient({ token }: { token: string | undefine
           <Link
             href="/instructor/my-courses"
             className="p-2 -ml-2 text-gray-400 hover:text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/30 rounded-lg transition-colors"
-            aria-label="Back to my courses"
+            aria-label={isFrench ? "Retour à mes formations" : "Back to my courses"}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create New Course</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {isFrench ? "Créer une nouvelle formation" : "Create New Course"}
+            </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Step {currentStep} of {TOTAL_STEPS}: {STEPS[currentStep - 1].title}
+              {isFrench
+                ? `Étape ${currentStep} sur ${TOTAL_STEPS} : ${STEPS[currentStep - 1].title}`
+                : `Step ${currentStep} of ${TOTAL_STEPS}: ${STEPS[currentStep - 1].title}`}
             </p>
           </div>
         </div>
@@ -298,7 +330,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
               disabled={busy}
               className="px-5 py-2.5 text-gray-700 bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-600 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              Back
+              {isFrench ? "Retour" : "Back"}
             </button>
           )}
           <button
@@ -306,7 +338,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
             disabled={busy}
             className={`px-5 py-2.5 text-gray-700 bg-white dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-600 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 ${isDrafting ? "opacity-70 cursor-not-allowed" : ""}`}
           >
-            {isDrafting ? "Saving..." : "Save as Draft"}
+            {isDrafting ? (isFrench ? "Enregistrement..." : "Saving...") : (isFrench ? "Enregistrer en brouillon" : "Save as Draft")}
           </button>
           <button
             onClick={() => {
@@ -316,7 +348,11 @@ export default function CreateCourseClient({ token }: { token: string | undefine
             disabled={busy}
             className={`px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-xl transition-colors shadow-sm flex items-center gap-2 ${isSubmitting ? "opacity-70 cursor-not-allowed" : ""}`}
           >
-            {isSubmitting ? "Submitting..." : currentStep === TOTAL_STEPS ? "Publish Course" : "Next Step"}
+            {isSubmitting
+              ? (isFrench ? "Publication..." : "Submitting...")
+              : currentStep === TOTAL_STEPS
+              ? (isFrench ? "Publier la formation" : "Publish Course")
+              : (isFrench ? "Étape suivante" : "Next Step")}
             {currentStep < TOTAL_STEPS && <ChevronRight className="w-4 h-4" />}
           </button>
         </div>
@@ -367,12 +403,14 @@ export default function CreateCourseClient({ token }: { token: string | undefine
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 md:p-8 shadow-sm">
         {currentStep === 1 && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Course Information</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
+              {isFrench ? "Informations de la formation" : "Course Information"}
+            </h2>
 
             <div className="space-y-6">
               <div className="space-y-2">
                 <label htmlFor="title" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Course Title <span className="text-red-500">*</span>
+                  {isFrench ? "Titre de la formation" : "Course Title"} <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="title"
@@ -381,14 +419,14 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                   value={formData.title}
                   onChange={handleChange}
                   maxLength={60}
-                  placeholder="e.g. Complete React Developer in 2026"
+                  placeholder={isFrench ? "ex. Développeur React Complet en 2026" : "e.g. Complete React Developer in 2026"}
                   className={`w-full px-4 py-3 rounded-xl border bg-transparent text-gray-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${validationError ? "border-red-500 focus:ring-red-500/20 bg-red-50/50 dark:bg-red-900/10" : "border-gray-300 dark:border-gray-600 focus:ring-brand-500/20 focus:border-brand-500"}`}
                 />
                 <p className={`text-xs flex justify-between ${validationError ? "text-red-500 font-medium" : "text-gray-500 dark:text-gray-400"}`}>
                   <span>
                     {validationError
-                      ? "Title is required to save or continue."
-                      : "A catchy title will help students find your course."}
+                      ? (isFrench ? "Le titre est requis pour continuer." : "Title is required to save or continue.")
+                      : (isFrench ? "Un titre accrocheur aidera les étudiants à trouver votre cours." : "A catchy title will help students find your course.")}
                   </span>
                   <span>{formData.title.length} / 60</span>
                 </p>
@@ -396,7 +434,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
 
               <div className="space-y-2">
                 <label htmlFor="description" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                  Course Description
+                  {isFrench ? "Description de la formation" : "Course Description"}
                 </label>
                 <textarea
                   id="description"
@@ -404,7 +442,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Describe what students will learn, who this course is for, and why they should take it."
+                  placeholder={isFrench ? "Décrivez ce que les étudiants vont apprendre, les compétences visées..." : "Describe what students will learn, who this course is for, and why they should take it."}
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none resize-none"
                 />
               </div>
@@ -412,7 +450,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label htmlFor="category" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Category
+                    {isFrench ? "Catégorie" : "Category"}
                   </label>
                   <select
                     id="category"
@@ -421,8 +459,8 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                     onChange={handleChange}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none appearance-none"
                   >
-                    <option value="">Select a category</option>
-                    <option value="Development">Development</option>
+                    <option value="">{isFrench ? "Sélectionner une catégorie" : "Select a category"}</option>
+                    <option value="Development">{isFrench ? "Développement" : "Development"}</option>
                     <option value="Design">Design</option>
                     <option value="Business">Business</option>
                   </select>
@@ -430,7 +468,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
 
                 <div className="space-y-2">
                   <label htmlFor="language" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Language
+                    {isFrench ? "Langue" : "Language"}
                   </label>
                   <select
                     id="language"
@@ -439,14 +477,16 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                     onChange={handleChange}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none appearance-none"
                   >
-                    <option value="en">English</option>
-                    <option value="fr">French</option>
+                    <option value="en">{isFrench ? "Anglais" : "English"}</option>
+                    <option value="fr">{isFrench ? "Français" : "French"}</option>
                   </select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Course Thumbnail</span>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  {isFrench ? "Miniature de la formation" : "Course Thumbnail"}
+                </span>
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -458,7 +498,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                     accept="image/*"
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     onChange={handleFileChange}
-                    aria-label="Upload course thumbnail"
+                    aria-label={isFrench ? "Téléverser la miniature" : "Upload course thumbnail"}
                   />
 
                   <div
@@ -467,12 +507,16 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                     {selectedFile ? <CheckCircle2 className="w-8 h-8" /> : <UploadCloud className="w-8 h-8" />}
                   </div>
                   <p className="text-gray-900 dark:text-white font-medium mb-1">
-                    {selectedFile ? selectedFile.name : "Click to upload or drag and drop"}
+                    {selectedFile
+                      ? selectedFile.name
+                      : isFrench
+                      ? "Cliquez pour téléverser ou glissez-déposez"
+                      : "Click to upload or drag and drop"}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {selectedFile
                       ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`
-                      : `PNG, JPG, GIF or SVG (max. ${MAX_FILE_MB} MB)`}
+                      : `PNG, JPG, GIF ou SVG (max. ${MAX_FILE_MB} Mo)`}
                   </p>
                 </div>
               </div>
@@ -482,9 +526,13 @@ export default function CreateCourseClient({ token }: { token: string | undefine
 
         {currentStep === 2 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Curriculum Builder</h2>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              {isFrench ? "Programme du cours" : "Curriculum Builder"}
+            </h2>
             <p className="text-sm text-gray-500 mb-6">
-              Start putting together your course by creating sections, lectures and practice.
+              {isFrench
+                ? "Construisez votre formation en ajoutant des modules, des leçons et des fichiers."
+                : "Start putting together your course by creating sections, lectures and practice."}
             </p>
 
             <div className="space-y-6">
@@ -492,19 +540,21 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                 <div key={mod.id} className="border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/50 dark:bg-gray-800/30 overflow-hidden">
                   <div className="p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between gap-4">
                     <div className="flex-1 flex items-center gap-3">
-                      <span className="font-semibold text-gray-900 dark:text-white shrink-0">Module {modIdx + 1}:</span>
+                      <span className="font-semibold text-gray-900 dark:text-white shrink-0">
+                        {isFrench ? `Module ${modIdx + 1} :` : `Module ${modIdx + 1}:`}
+                      </span>
                       <input 
                         type="text" 
                         value={mod.title}
                         onChange={(e) => updateModuleTitle(mod.id, e.target.value)}
-                        placeholder="Enter module title"
+                        placeholder={isFrench ? "Titre du module" : "Enter module title"}
                         className="flex-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none text-gray-900 dark:text-white"
                       />
                     </div>
                     <button 
                       onClick={() => deleteModule(mod.id)}
                       className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                      title="Delete Module"
+                      title={isFrench ? "Supprimer le module" : "Delete Module"}
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -514,18 +564,20 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                     {mod.lessons.map((lesson, lessonIdx) => (
                       <div key={lesson.id} className="flex flex-col gap-3 p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
                         <div className="flex items-center gap-3">
-                          <span className="text-sm text-gray-500 shrink-0">Lesson {lessonIdx + 1}:</span>
+                          <span className="text-sm text-gray-500 shrink-0">
+                            {isFrench ? `Leçon ${lessonIdx + 1} :` : `Lesson ${lessonIdx + 1}:`}
+                          </span>
                           <input 
                             type="text" 
                             value={lesson.title}
                             onChange={(e) => updateLessonTitle(mod.id, lesson.id, e.target.value)}
-                            placeholder="Enter lesson title"
+                            placeholder={isFrench ? "Titre de la leçon" : "Enter lesson title"}
                             className="flex-1 bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none text-gray-900 dark:text-white"
                           />
                           <button 
                             onClick={() => deleteLesson(mod.id, lesson.id)}
                             className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                            title="Delete Lesson"
+                            title={isFrench ? "Supprimer la leçon" : "Delete Lesson"}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -535,7 +587,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                           <div className="flex items-center gap-4">
                             <label className={`cursor-pointer flex items-center gap-2 px-3 py-1.5 border rounded-lg text-sm transition-colors ${lesson.file ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
                               <Film className="w-4 h-4" />
-                              {lesson.file ? lesson.file.name : "Upload Video or PDF"}
+                              {lesson.file ? lesson.file.name : (isFrench ? "Téléverser vidéo ou PDF" : "Upload Video or PDF")}
                               <input 
                                 type="file" 
                                 accept="video/*,.pdf" 
@@ -558,7 +610,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                       className="flex items-center gap-2 text-sm text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium py-2 px-3 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
                     >
                       <PlusCircle className="w-4 h-4" />
-                      Add Lesson
+                      {isFrench ? "Ajouter une leçon" : "Add Lesson"}
                     </button>
                   </div>
                 </div>
@@ -570,19 +622,25 @@ export default function CreateCourseClient({ token }: { token: string | undefine
               className="w-full flex items-center justify-center gap-2 py-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-600 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <PlusCircle className="w-5 h-5" />
-              Add New Module
+              {isFrench ? "Ajouter un nouveau module" : "Add New Module"}
             </button>
           </div>
         )}
 
         {currentStep === 3 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Course Settings</h2>
-            <p className="text-sm text-gray-500 mb-6">Configure the price and difficulty level of your course.</p>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              {isFrench ? "Paramètres du cours" : "Course Settings"}
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">
+              {isFrench
+                ? "Configurez le prix et le niveau d'expérience recommandé pour votre formation."
+                : "Configure the price and difficulty level of your course."}
+            </p>
 
             <div className="space-y-2">
               <label htmlFor="level" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Experience Level
+                {isFrench ? "Niveau d'expérience requis" : "Experience Level"}
               </label>
               <select
                 id="level"
@@ -591,15 +649,15 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                 onChange={handleChange}
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none appearance-none"
               >
-                <option value="BEGINNER">Beginner (No prior experience)</option>
-                <option value="INTERMEDIATE">Intermediate (Some experience)</option>
-                <option value="ADVANCED">Advanced (Expert level)</option>
+                <option value="BEGINNER">{isFrench ? "Débutant (Aucune expérience préalable)" : "Beginner (No prior experience)"}</option>
+                <option value="INTERMEDIATE">{isFrench ? "Intermédiaire (Quelques connaissances)" : "Intermediate (Some experience)"}</option>
+                <option value="ADVANCED">{isFrench ? "Avancé (Niveau expert)" : "Advanced (Expert level)"}</option>
               </select>
             </div>
 
             <div className="space-y-2">
               <label htmlFor="price" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Course Price ($)
+                {isFrench ? "Prix de la formation ($)" : "Course Price ($)"}
               </label>
               <input
                 id="price"
@@ -613,7 +671,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none appearance-none"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Set to 0 to make the course free.
+                {isFrench ? "Indiquez 0 pour rendre la formation entièrement gratuite." : "Set to 0 to make the course free."}
               </p>
             </div>
           </div>
@@ -621,17 +679,33 @@ export default function CreateCourseClient({ token }: { token: string | undefine
 
         {currentStep === 4 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-500 space-y-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Ready to Publish</h2>
-            <p className="text-sm text-gray-500 mb-6">Review your course details before publishing.</p>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              {isFrench ? "Prêt à publier" : "Ready to Publish"}
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">
+              {isFrench
+                ? "Vérifiez les détails de votre formation avant sa publication."
+                : "Review your course details before publishing."}
+            </p>
             <div className="bg-brand-50 dark:bg-brand-900/20 p-6 rounded-xl border border-brand-100 dark:border-brand-900/50">
               <div className="flex gap-4 items-start">
                 <CheckCircle2 className="w-6 h-6 text-brand-500 shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">You are almost there!</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                    {isFrench ? "Vous y êtes presque !" : "You are almost there!"}
+                  </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    By clicking <strong>&quot;Publish Course&quot;</strong> below, your course will be submitted for
-                    review or immediately published. Make sure your title and descriptions are exactly how you want
-                    them.
+                    {isFrench ? (
+                      <>
+                        En cliquant sur <strong>&quot;Publier la formation&quot;</strong> ci-dessous, votre cours sera mis en ligne et accessible aux étudiants. Assurez-vous que le titre et le contenu sont complets.
+                      </>
+                    ) : (
+                      <>
+                        By clicking <strong>&quot;Publish Course&quot;</strong> below, your course will be submitted for
+                        review or immediately published. Make sure your title and descriptions are exactly how you want
+                        them.
+                      </>
+                    )}
                   </p>
                 </div>
               </div>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { Eye, EyeOff, User, GraduationCap } from "lucide-react";
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -17,6 +17,7 @@ export default function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [role, setRole] = useState("student");
   const t = useTranslations("auth");
+  const locale = useLocale();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +42,13 @@ export default function SignUpForm() {
 
       if (!registerRes.ok) {
         const errorData = await registerRes.json();
-        throw new Error(errorData.detail || errorData.username?.[0] || "Registration failed. Email might already be in use.");
+        throw new Error(
+          errorData.detail ||
+            errorData.username?.[0] ||
+            (locale === "fr"
+              ? "L'inscription a échoué. Cet email est peut-être déjà utilisé."
+              : "Registration failed. Email might already be in use.")
+        );
       }
 
       // 2. Automatically log them in after registration
@@ -51,7 +58,7 @@ export default function SignUpForm() {
         body: JSON.stringify({ username: email, password }),
       });
 
-      if (!loginRes.ok) throw new Error("Login after registration failed.");
+      if (!loginRes.ok) throw new Error(locale === "fr" ? "Échec de la connexion automatique." : "Login after registration failed.");
 
       const data = await loginRes.json();
       const safeName = `${firstName || "User"}`.trim() || "User";
@@ -63,7 +70,7 @@ export default function SignUpForm() {
 
       window.location.href = role === "instructor" ? "/instructor/dashboard" : "/student/dashboard";
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      setError(err.message || (locale === "fr" ? "Une erreur inattendue est survenue." : "An unexpected error occurred."));
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +80,7 @@ export default function SignUpForm() {
     <div className="flex w-full flex-col dark:text-white">
       <div className="mb-8 text-start">
         <div className="mb-3 inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-brand-700 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300">
-          Join Yinga Academia
+          {locale === "fr" ? "Rejoignez Yinga Academia" : "Join Yinga Academia"}
         </div>
         <h1 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
           {t("createAccount")}

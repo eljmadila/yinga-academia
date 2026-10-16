@@ -46,7 +46,7 @@ const SortableLesson = ({ lesson, modIdx, handleUpdateLessonTitle, handleDeleteL
             onClick={() => setActiveLessonUpload(activeLessonUpload === lesson.id ? null : lesson.id)} 
             className="text-brand-500 hover:text-brand-600 text-xs font-semibold"
           >
-            Vidéo
+            Video
           </button>
           <button onClick={() => handleDeleteLesson(lesson.id, modIdx)} className="text-gray-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
         </div>
@@ -166,8 +166,12 @@ export default function CourseEditor({ courseIdProp }: { courseIdProp?: string |
     }
   }, [courseId, currentStep]);
 
+  const isFrench = locale === "fr";
+
   const handleAddModule = async () => {
-    const modTitle = `Module ${modules.length + 1}: Nouveau Module`;
+    const modTitle = isFrench 
+      ? `Module ${modules.length + 1}: Nouveau Module` 
+      : `Module ${modules.length + 1}: New Module`;
     try {
       const res = await fetchApi('/modules/', {
         method: 'POST',
@@ -178,15 +182,15 @@ export default function CourseEditor({ courseIdProp }: { courseIdProp?: string |
         setModules([...modules, { ...newMod, lessons: [] }]);
       } else {
         const errData = await res.text();
-        toast.error("Erreur création module: " + errData);
+        toast.error((isFrench ? "Erreur création module: " : "Error creating module: ") + errData);
       }
     } catch (e) {
-      toast.error("Erreur réseau: " + String(e));
+      toast.error((isFrench ? "Erreur réseau: " : "Network error: ") + String(e));
     }
   };
 
   const handleDeleteModule = async (moduleId: string) => {
-    if (!confirm("Supprimer ce module et toutes ses leçons ?")) return;
+    if (!confirm(isFrench ? "Supprimer ce module et toutes ses leçons ?" : "Delete this module and all its lessons?")) return;
     await fetchApi(`/modules/${moduleId}/`, { method: 'DELETE' });
     setModules(modules.filter(m => m.id !== moduleId));
   };
@@ -243,10 +247,10 @@ export default function CourseEditor({ courseIdProp }: { courseIdProp?: string |
         setPendingUploadFile(file);
       } else {
         const errData = await res.text();
-        toast.error("Erreur création leçon: " + errData);
+        toast.error((isFrench ? "Erreur création leçon: " : "Error creating lesson: ") + errData);
       }
     } catch (err) {
-      toast.error("Erreur réseau: " + String(err));
+      toast.error((isFrench ? "Erreur réseau: " : "Network error: ") + String(err));
     }
     
     // Reset file input
@@ -255,7 +259,7 @@ export default function CourseEditor({ courseIdProp }: { courseIdProp?: string |
   };
 
   const handleDeleteLesson = async (lessonId: string, moduleIndex: number) => {
-    if (!confirm("Supprimer cette leçon ?")) return;
+    if (!confirm(isFrench ? "Supprimer cette leçon ?" : "Delete this lesson?")) return;
     await fetchApi(`/lessons/${lessonId}/`, { method: 'DELETE' });
     const newModules = [...modules];
     newModules[moduleIndex].lessons = newModules[moduleIndex].lessons.filter(l => l.id !== lessonId);
@@ -542,10 +546,14 @@ export default function CourseEditor({ courseIdProp }: { courseIdProp?: string |
                       <div className="w-full max-w-sm rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm mb-3 relative">
                         <img src={thumbnailPreview} alt="Preview" className="w-full h-40 object-cover" />
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <p className="text-white text-sm font-medium">Changer d'image</p>
+                          <p className="text-white text-sm font-medium">
+                            {isFrench ? "Changer d'image" : "Change image"}
+                          </p>
                         </div>
                       </div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate max-w-xs">{thumbnail?.name || "Image sauvegardée"}</p>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate max-w-xs">
+                        {thumbnail?.name || (isFrench ? "Image sauvegardée" : "Saved image")}
+                      </p>
                     </div>
                   ) : (
                     <>

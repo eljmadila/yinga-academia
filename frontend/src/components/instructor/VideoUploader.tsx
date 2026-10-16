@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useDropzone } from "react-dropzone";
 import { Upload, X, FileVideo } from "lucide-react";
 import { fetchApi } from "@/lib/api";
@@ -14,6 +14,8 @@ interface VideoUploaderProps {
 
 export default function VideoUploader({ lessonId, onUploadSuccess, initialFile }: VideoUploaderProps) {
   const t = useTranslations("instructor.videoUploader");
+  const locale = useLocale();
+  const isFrench = locale === "fr";
   const [file, setFile] = useState<File | null>(initialFile || null);
   const [progress, setProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -73,7 +75,7 @@ export default function VideoUploader({ lessonId, onUploadSuccess, initialFile }
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.error || "Upload failed on chunk " + i);
+          throw new Error(errData.error || (isFrench ? `Échec de l'envoi du segment ${i}` : `Upload failed on chunk ${i}`));
         }
         
         // Calculate progress
@@ -86,7 +88,7 @@ export default function VideoUploader({ lessonId, onUploadSuccess, initialFile }
         }
       }
     } catch (err: any) {
-      setError(err.message || "An error occurred during upload.");
+      setError(err.message || (isFrench ? "Une erreur est survenue lors de l'envoi." : "An error occurred during upload."));
     } finally {
       setIsUploading(false);
     }
@@ -159,7 +161,7 @@ export default function VideoUploader({ lessonId, onUploadSuccess, initialFile }
               onClick={uploadFile}
               className="mt-2 w-full rounded-lg bg-brand-500 py-2 text-sm font-medium text-white hover:bg-brand-600 transition-colors"
             >
-              Démarrer l'upload
+              {isFrench ? "Démarrer l'envoi" : "Start Upload"}
             </button>
           )}
         </div>

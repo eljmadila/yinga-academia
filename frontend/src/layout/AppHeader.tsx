@@ -1,14 +1,14 @@
 "use client";
 
 import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 import UserDropdown from "@/components/header/UserDropdown";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { cn } from "@/utils";
 import { useTranslations, useLocale } from "next-intl";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { useRouter } from "next/navigation";
 
 const AppHeader: React.FC = () => {
   const t = useTranslations("header");
@@ -22,7 +22,7 @@ const AppHeader: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/${locale}/student/catalog?q=${encodeURIComponent(searchQuery)}`);
+      router.push(`/student/catalog?q=${encodeURIComponent(searchQuery)}`);
     }
   };
 
@@ -135,10 +135,10 @@ const AppHeader: React.FC = () => {
           )}
         >
           <div className="flex items-center gap-2 2xsm:gap-3">
+            {/* <!-- Language Switcher --> */}
+            <LanguageSwitcher variant="pill" />
             {/* <!-- Dark Mode Toggler --> */}
             <ThemeToggleButton />
-            {/* <!-- Dark Mode Toggler --> */}
-
           </div>
           {/* <!-- User Area --> */}
           <UserDropdown />

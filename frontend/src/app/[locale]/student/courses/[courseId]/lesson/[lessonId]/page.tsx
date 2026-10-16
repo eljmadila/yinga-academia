@@ -25,7 +25,8 @@ export default async function LessonPage({
 }: { 
   params: Promise<{ locale: string; courseId: string; lessonId: string }> 
 }) {
-  const { courseId, lessonId } = await params;
+  const { locale, courseId, lessonId } = await params;
+  const isFrench = locale === "fr";
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token")?.value;
 
@@ -40,7 +41,7 @@ export default async function LessonPage({
   const modules: any[] = [...(course.modules || [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const orphanLessons = (course.lessons || []).filter((l: any) => !l.module);
   if (orphanLessons.length > 0) {
-    modules.push({ id: "orphan", title: "Additional lessons", lessons: orphanLessons });
+    modules.push({ id: "orphan", title: isFrench ? "Leçons supplémentaires" : "Additional lessons", lessons: orphanLessons });
   }
   modules.forEach((m) => {
     m.lessons = [...(m.lessons || [])].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
@@ -64,13 +65,15 @@ export default async function LessonPage({
         <div className="flex items-center gap-4 min-w-0">
           <Link 
             href={`/student/courses/${courseId}`}
-            aria-label="Back to course"
+            aria-label={isFrench ? "Retour au cours" : "Back to course"}
             className="flex items-center justify-center w-10 h-10 flex-shrink-0 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
           >
             <ChevronLeft className="w-5 h-5" />
           </Link>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-brand-600 dark:text-brand-400">Course Player</p>
+            <p className="text-xs font-medium text-brand-600 dark:text-brand-400">
+              {isFrench ? "Lecteur de formation" : "Course Player"}
+            </p>
             <h1 className="text-lg font-bold text-gray-900 dark:text-white leading-tight line-clamp-1">
               {course.title}
             </h1>

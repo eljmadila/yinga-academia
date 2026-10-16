@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,6 +14,7 @@ export default function SignInForm() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const t = useTranslations("auth");
+  const locale = useLocale();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +48,11 @@ export default function SignInForm() {
 
       window.location.href = userRole === "instructor" ? "/instructor/dashboard" : "/student/dashboard";
     } catch (err) {
-      setError("Failed to sign in. Please check your credentials.");
+      setError(
+        locale === "fr"
+          ? "Échec de la connexion. Veuillez vérifier votre email et mot de passe."
+          : "Failed to sign in. Please check your credentials."
+      );
     } finally {
       setIsLoading(false);
     }

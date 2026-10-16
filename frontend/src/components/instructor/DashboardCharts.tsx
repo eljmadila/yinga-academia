@@ -20,6 +20,8 @@ import {
 
 
 
+import { useLocale } from "next-intl";
+
 const revenueConfig = {
   revenue: {
     label: "Revenus (€)",
@@ -28,9 +30,12 @@ const revenueConfig = {
 } satisfies ChartConfig;
 
 export function RevenueChart({ data }: { data?: any[] }) {
+  const locale = useLocale();
+  const isFrench = locale === "fr";
+
   const chartData = data?.length ? data : [
-    { month: "Jan", revenue: 0 },
-    { month: "Feb", revenue: 0 }
+    { month: isFrench ? "Jan" : "Jan", revenue: 0 },
+    { month: isFrench ? "Fév" : "Feb", revenue: 0 }
   ];
 
   let trend = 0;
@@ -47,11 +52,13 @@ export function RevenueChart({ data }: { data?: any[] }) {
   return (
     <Card className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.03] shadow-sm ring-0">
       <CardHeader>
-        <CardTitle className="text-gray-800 dark:text-white/90">Monthly Revenue</CardTitle>
+        <CardTitle className="text-gray-800 dark:text-white/90">
+          {isFrench ? "Revenus mensuels" : "Monthly Revenue"}
+        </CardTitle>
         <CardDescription>
           {chartData.length > 1 
             ? `${chartData[0].month} - ${chartData[chartData.length - 1].month} 2026` 
-            : "Recent Data"}
+            : (isFrench ? "Données récentes" : "Recent Data")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -92,11 +99,15 @@ export function RevenueChart({ data }: { data?: any[] }) {
         <div className="flex w-full items-start gap-2 text-sm">
           <div className="grid gap-2">
             <div className="flex items-center gap-2 font-medium leading-none text-gray-800 dark:text-white/90">
-              {trend > 0 ? `Up by ${trend}% this month` : trend < 0 ? `Down by ${Math.abs(trend)}% this month` : "No change this month"} 
+              {trend > 0 
+                ? (isFrench ? `+${trend}% ce mois-ci` : `Up by ${trend}% this month`) 
+                : trend < 0 
+                  ? (isFrench ? `-${Math.abs(trend)}% ce mois-ci` : `Down by ${Math.abs(trend)}% this month`) 
+                  : (isFrench ? "Stable ce mois-ci" : "No change this month")} 
               <TrendingUp className={`h-4 w-4 ${trend >= 0 ? "text-green-500" : "text-red-500 rotate-180"}`} />
             </div>
             <div className="flex items-center gap-2 leading-none text-gray-500">
-              Compared to the previous period
+              {isFrench ? "Comparé à la période précédente" : "Compared to the previous period"}
             </div>
           </div>
         </div>
@@ -105,8 +116,6 @@ export function RevenueChart({ data }: { data?: any[] }) {
   );
 }
 
-
-
 const enrollmentConfig = {
   enrollments: {
     label: "Inscriptions",
@@ -114,12 +123,15 @@ const enrollmentConfig = {
 } satisfies ChartConfig;
 
 export function EnrollmentsChart({ data }: { data?: any[] }) {
+  const locale = useLocale();
+  const isFrench = locale === "fr";
+
   const chartData = data?.length ? data.map((d: any) => ({
     course: d.course,
     enrollments: d.learners,
     color: d.fill
   })) : [
-    { course: "No courses", enrollments: 0, color: "#3b82f6" }
+    { course: isFrench ? "Aucun cours" : "No courses", enrollments: 0, color: "#3b82f6" }
   ];
 
   const totalEnrollments = chartData.reduce((acc, curr) => acc + curr.enrollments, 0);
@@ -136,8 +148,12 @@ export function EnrollmentsChart({ data }: { data?: any[] }) {
   return (
     <Card className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-white/[0.03] shadow-sm ring-0">
       <CardHeader>
-        <CardTitle className="text-gray-800 dark:text-white/90">Enrollments per course</CardTitle>
-        <CardDescription>Distribution of active students</CardDescription>
+        <CardTitle className="text-gray-800 dark:text-white/90">
+          {isFrench ? "Inscriptions par cours" : "Enrollments per course"}
+        </CardTitle>
+        <CardDescription>
+          {isFrench ? "Répartition des étudiants actifs" : "Distribution of active students"}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={enrollmentConfig}>
@@ -172,10 +188,15 @@ export function EnrollmentsChart({ data }: { data?: any[] }) {
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 font-medium leading-none text-gray-800 dark:text-white/90">
-          {topPercentage > 0 ? `${topCourse.course} is the most popular` : "No enrollments yet"} <TrendingUp className="h-4 w-4 text-green-500" />
+          {topPercentage > 0 
+            ? (isFrench ? `${topCourse.course} est le plus populaire` : `${topCourse.course} is the most popular`) 
+            : (isFrench ? "Aucune inscription pour le moment" : "No enrollments yet")} 
+          <TrendingUp className="h-4 w-4 text-green-500" />
         </div>
         <div className="leading-none text-gray-500">
-          {topPercentage > 0 ? `It represents over ${topPercentage}% of total enrollments.` : "Your data will appear here once students enroll."}
+          {topPercentage > 0 
+            ? (isFrench ? `Il représente plus de ${topPercentage}% des inscriptions totales.` : `It represents over ${topPercentage}% of total enrollments.`) 
+            : (isFrench ? "Vos données apparaîtront dès que des étudiants s'inscriront." : "Your data will appear here once students enroll.")}
         </div>
       </CardFooter>
     </Card>

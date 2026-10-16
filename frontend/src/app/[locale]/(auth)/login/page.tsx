@@ -3,16 +3,29 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
+
 export const metadata: Metadata = {
   title: "Login | Yinga Academia",
   description: "Connectez-vous à votre compte",
 };
 
-export default async function Login() {
+export default async function Login({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const isFrench = locale === "fr";
   const t = await getTranslations("auth");
 
   return (
-    <div className="flex min-h-screen bg-brand-50 dark:bg-gray-950">
+    <div className="relative flex min-h-screen bg-brand-50 dark:bg-gray-950">
+      {/* Top Language Switcher */}
+      <div className="absolute top-4 right-4 z-50">
+        <LanguageSwitcher variant="pill" />
+      </div>
+
       <div className="relative hidden w-1/2 flex-col items-center justify-center overflow-hidden bg-brand-100 lg:flex dark:bg-gray-900">
         <Image
           src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1000&auto=format&fit=crop"
@@ -25,19 +38,31 @@ export default async function Login() {
 
         <div className="relative z-10 max-w-xl px-12 text-white">
           <div className="mb-6 inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-white/90 backdrop-blur-sm">
-            A learning journey built for growth
+            {isFrench ? "Un parcours conçu pour votre réussite" : "A learning journey built for growth"}
           </div>
           <h2 className="mb-4 text-4xl font-bold leading-tight text-white">{t("loginHeroTitle")}</h2>
           <p className="mb-8 text-lg text-white/85">{t("loginHeroDescription")}</p>
 
           <div className="grid gap-3 text-sm text-white/90 sm:grid-cols-2">
             <div className="rounded-2xl border border-white/15 bg-white/5 p-4 backdrop-blur-sm">
-              <div className="mb-2 text-lg font-semibold">Expert-led learning</div>
-              <p className="text-white/75">Practical programs designed for professionals and students.</p>
+              <div className="mb-2 text-lg font-semibold">
+                {isFrench ? "Formations d'experts" : "Expert-led learning"}
+              </div>
+              <p className="text-white/75">
+                {isFrench
+                  ? "Des programmes pratiques conçus pour étudiants et professionnels."
+                  : "Practical programs designed for professionals and students."}
+              </p>
             </div>
             <div className="rounded-2xl border border-white/15 bg-white/5 p-4 backdrop-blur-sm">
-              <div className="mb-2 text-lg font-semibold">Role-based access</div>
-              <p className="text-white/75">Student and instructor dashboards built around your learning path.</p>
+              <div className="mb-2 text-lg font-semibold">
+                {isFrench ? "Espaces dédiés" : "Role-based access"}
+              </div>
+              <p className="text-white/75">
+                {isFrench
+                  ? "Tableaux de bord sur mesure pour étudiants et formateurs."
+                  : "Student and instructor dashboards built around your learning path."}
+              </p>
             </div>
           </div>
         </div>

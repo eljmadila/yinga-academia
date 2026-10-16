@@ -12,7 +12,8 @@ export default async function CourseCertificatePage({
 }: {
   params: Promise<{ locale: string; courseId: string }>;
 }) {
-  const { courseId } = await params;
+  const { courseId, locale } = await params;
+  const isFrench = locale === "fr";
   const cookieStore = await cookies();
   const token = cookieStore.get('access_token')?.value;
 
@@ -59,7 +60,7 @@ export default async function CourseCertificatePage({
         className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-brand-600 dark:text-gray-400 dark:hover:text-brand-400 mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to Course Overview
+        {isFrench ? "Retour à la formation" : "Back to Course Overview"}
       </Link>
 
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-3xl p-8 sm:p-12 shadow-sm text-center">
@@ -68,7 +69,7 @@ export default async function CourseCertificatePage({
         </div>
 
         <span className="px-3.5 py-1 bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 rounded-full text-xs font-semibold uppercase tracking-wider">
-          Certificate of Completion
+          {isFrench ? "Certificat de réussite" : "Certificate of Completion"}
         </span>
 
         <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mt-4 mb-2">
@@ -77,8 +78,12 @@ export default async function CourseCertificatePage({
 
         <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto text-sm sm:text-base mb-8">
           {isCompleted
-            ? "Congratulations! You have completed all lessons and requirements for this course."
-            : "Complete all lessons and quizzes in this course to earn and unlock your official certificate."}
+            ? (isFrench
+                ? "Félicitations ! Vous avez terminé toutes les leçons et exigences de cette formation."
+                : "Congratulations! You have completed all lessons and requirements for this course.")
+            : (isFrench
+                ? "Terminez toutes les leçons pour obtenir et débloquer votre certificat officiel."
+                : "Complete all lessons and quizzes in this course to earn and unlock your official certificate.")}
         </p>
 
         {isCompleted ? (
@@ -92,21 +97,25 @@ export default async function CourseCertificatePage({
               className="w-full sm:w-auto px-8 py-3.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
             >
               <BookOpen className="w-5 h-5" />
-              Review Course
+              {isFrench ? "Revoir le cours" : "Review Course"}
             </Link>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-4 py-2 rounded-xl">
               <CheckCircle2 className="w-4 h-4" />
-              <span>Current Progress: {enrollment?.progress_percentage || 0}%</span>
+              <span>
+                {isFrench
+                  ? `Progression actuelle : ${enrollment?.progress_percentage || 0}%`
+                  : `Current Progress: ${enrollment?.progress_percentage || 0}%`}
+              </span>
             </div>
             <div>
               <Link
                 href={`/student/courses/${courseId}`}
                 className="inline-flex items-center gap-2 px-8 py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl transition-all shadow-md"
               >
-                Continue Learning
+                {isFrench ? "Continuer la formation" : "Continue Learning"}
               </Link>
             </div>
           </div>

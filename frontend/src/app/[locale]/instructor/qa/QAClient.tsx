@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { MessageSquare, Search, CheckCircle2, Clock, Reply } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { resolveApiUrl, getClientAccessToken } from '@/lib/api';
 
 interface Answer {
@@ -53,6 +54,9 @@ interface Question {
 }
 
 export default function QAClient({ token }: { token: string | undefined }) {
+  const locale = useLocale();
+  const isFrench = locale === "fr";
+
   const [questions, setQuestions] = useState<Question[]>([]);
   const [activeQuestion, setActiveQuestion] = useState<Question | null>(null);
   const [search, setSearch] = useState("");
@@ -137,11 +141,11 @@ export default function QAClient({ token }: { token: string | undefined }) {
         }));
         setReplyBody("");
       } else {
-        alert("Failed to post reply");
+        alert(isFrench ? "Échec de l'envoi de la réponse" : "Failed to post reply");
       }
     } catch (err) {
       console.error(err);
-      alert("An error occurred");
+      alert(isFrench ? "Une erreur est survenue" : "An error occurred");
     } finally {
       setIsSubmitting(false);
     }
@@ -181,45 +185,45 @@ export default function QAClient({ token }: { token: string | undefined }) {
     const diff = now.getTime() - d.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
     
-    if (hours < 1) return "Just now";
-    if (hours < 24) return `${hours}h ago`;
-    return d.toLocaleDateString();
+    if (hours < 1) return isFrench ? "À l'instant" : "Just now";
+    if (hours < 24) return isFrench ? `Il y a ${hours}h` : `${hours}h ago`;
+    return d.toLocaleDateString(isFrench ? "fr-FR" : "en-US");
   };
 
   const getCourseTitle = (q?: Question | null) => {
-    if (!q) return "Course";
+    if (!q) return isFrench ? "Cours" : "Course";
     if (q.lesson_details?.course?.title) return q.lesson_details.course.title;
     if (typeof q.lesson === 'object' && q.lesson?.course?.title) return q.lesson.course.title;
     if (q.course_title) return q.course_title;
-    return "Course Q&A";
+    return isFrench ? "Q&R du cours" : "Course Q&A";
   };
 
   const getLessonTitle = (q?: Question | null) => {
-    if (!q) return "General Lesson";
+    if (!q) return isFrench ? "Leçon générale" : "General Lesson";
     if (q.lesson_details?.title) return q.lesson_details.title;
     if (typeof q.lesson === 'object' && q.lesson?.title) return q.lesson.title;
     if (q.lesson_title) return q.lesson_title;
-    return "General Question";
+    return isFrench ? "Question générale" : "General Question";
   };
 
   const getStudentDisplayName = (q?: Question | null) => {
-    if (!q) return "Student";
+    if (!q) return isFrench ? "Étudiant" : "Student";
     if (q.student_name) return q.student_name;
     const s = q.student;
-    if (!s) return "Student";
+    if (!s) return isFrench ? "Étudiant" : "Student";
     if (typeof s === "string") return s;
     if (s.first_name || s.last_name) return `${s.first_name || ""} ${s.last_name || ""}`.trim();
     if (s.email) return s.email.split('@')[0];
-    return "Student";
+    return isFrench ? "Étudiant" : "Student";
   };
 
   const getAuthorDisplayName = (author?: any, authorName?: string) => {
     if (authorName) return authorName;
-    if (!author) return "Instructor";
+    if (!author) return isFrench ? "Instructeur" : "Instructor";
     if (typeof author === "string") return author;
     if (author.first_name || author.last_name) return `${author.first_name || ""} ${author.last_name || ""}`.trim();
     if (author.email) return author.email.split('@')[0];
-    return "Instructor";
+    return isFrench ? "Instructeur" : "Instructor";
   };
 
   return (
@@ -231,8 +235,12 @@ export default function QAClient({ token }: { token: string | undefined }) {
             <MessageSquare className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Q&A Dashboard</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Manage and answer student questions</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {isFrench ? "Tableau de bord Q&R" : "Q&A Dashboard"}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {isFrench ? "Gérez et répondez aux questions des étudiants" : "Manage and answer student questions"}
+            </p>
           </div>
         </div>
         
@@ -243,7 +251,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search questions..."
+              placeholder={isFrench ? "Rechercher des questions..." : "Search questions..."}
               className="w-full pl-9 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           </div>
@@ -258,13 +266,13 @@ export default function QAClient({ token }: { token: string | undefined }) {
               onClick={() => setFilter("unanswered")}
               className={`flex-1 py-3 text-sm font-semibold transition-colors ${filter === "unanswered" ? "text-brand-600 dark:text-brand-400 border-b-2 border-brand-500 bg-brand-50/50 dark:bg-brand-900/10" : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700/50"}`}
             >
-              Unanswered ({questions.filter(q => (q.answers || []).length === 0).length})
+              {isFrench ? "Sans réponse" : "Unanswered"} ({questions.filter(q => (q.answers || []).length === 0).length})
             </button>
             <button 
               onClick={() => setFilter("all")}
               className={`flex-1 py-3 text-sm font-semibold transition-colors ${filter === "all" ? "text-brand-600 dark:text-brand-400 border-b-2 border-brand-500 bg-brand-50/50 dark:bg-brand-900/10" : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700/50"}`}
             >
-              All Questions
+              {isFrench ? "Toutes les questions" : "All Questions"}
             </button>
           </div>
           
@@ -272,11 +280,11 @@ export default function QAClient({ token }: { token: string | undefined }) {
             {loading ? (
               <div className="p-8 text-center text-gray-500">
                 <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                <p className="text-xs">Loading questions...</p>
+                <p className="text-xs">{isFrench ? "Chargement des questions..." : "Loading questions..."}</p>
               </div>
             ) : filteredQuestions.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
-                <p>No questions found.</p>
+                <p>{isFrench ? "Aucune question trouvée." : "No questions found."}</p>
               </div>
             ) : (
               filteredQuestions.map(q => (
@@ -287,7 +295,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
                 >
                   <div className="flex justify-between items-start mb-2">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${activeQuestion?.id === q.id ? 'text-brand-600 dark:text-brand-400 bg-brand-100 dark:bg-brand-900/50' : 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800'}`}>
-                      Course: {getCourseTitle(q)}
+                      {isFrench ? "Cours" : "Course"}: {getCourseTitle(q)}
                     </span>
                     <span className="text-xs text-gray-500 flex items-center gap-1">
                       <Clock className="w-3 h-3" /> {formatDate(q.created_at)}
@@ -322,15 +330,15 @@ export default function QAClient({ token }: { token: string | undefined }) {
                     </div>
                   </div>
                   {activeQuestion.is_resolved ? (
-                    <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-lg">
-                      <CheckCircle2 className="w-4 h-4" /> Resolved
+                    <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-lg">
+                      <CheckCircle2 className="w-4 h-4" /> {isFrench ? "Résolu" : "Resolved"}
                     </span>
                   ) : (
                     <button 
                       onClick={handleToggleResolve}
                       className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Mark Resolved
+                      <CheckCircle2 className="w-4 h-4" /> {isFrench ? "Marquer comme résolu" : "Mark Resolved"}
                     </button>
                   )}
                 </div>
@@ -354,7 +362,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
                       <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 w-full">
                         <div className="flex justify-between items-center mb-2">
                           <span className="font-bold text-sm text-gray-900 dark:text-white">
-                            {authorName} {ans.author_role === 'INSTRUCTOR' ? '(Instructor)' : ''}
+                            {authorName} {ans.author_role === 'INSTRUCTOR' ? (isFrench ? '(Instructeur)' : '(Instructor)') : ''}
                           </span>
                           <span className="text-xs text-gray-500">{formatDate(ans.created_at)}</span>
                         </div>
@@ -371,7 +379,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
                     value={replyBody}
                     onChange={e => setReplyBody(e.target.value)}
                     className="w-full p-4 bg-transparent outline-none text-gray-800 dark:text-gray-200 resize-none min-h-[120px]"
-                    placeholder={`Write your answer to ${getStudentDisplayName(activeQuestion)}...`}
+                    placeholder={isFrench ? `Rédigez votre réponse à ${getStudentDisplayName(activeQuestion)}...` : `Write your answer to ${getStudentDisplayName(activeQuestion)}...`}
                   />
                   <div className="flex justify-end items-center p-3 bg-gray-50 dark:bg-gray-900/80 border-t border-gray-100 dark:border-gray-700">
                     <button 
@@ -379,7 +387,7 @@ export default function QAClient({ token }: { token: string | undefined }) {
                       disabled={!replyBody.trim() || isSubmitting}
                       className="flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50"
                     >
-                      <Reply className="w-4 h-4" /> {isSubmitting ? "Posting..." : "Post Reply"}
+                      <Reply className="w-4 h-4" /> {isSubmitting ? (isFrench ? "Envoi..." : "Posting...") : (isFrench ? "Publier la réponse" : "Post Reply")}
                     </button>
                   </div>
                 </div>
@@ -388,8 +396,12 @@ export default function QAClient({ token }: { token: string | undefined }) {
           ) : (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center text-gray-500">
               <MessageSquare className="w-12 h-12 mb-4 text-gray-300 dark:text-gray-600" />
-              <p className="text-lg font-medium text-gray-900 dark:text-gray-200">No question selected</p>
-              <p className="text-sm">Select a question from the sidebar to view details</p>
+              <p className="text-lg font-medium text-gray-900 dark:text-gray-200">
+                {isFrench ? "Aucune question sélectionnée" : "No question selected"}
+              </p>
+              <p className="text-sm">
+                {isFrench ? "Sélectionnez une question dans la barre latérale pour afficher les détails" : "Select a question from the sidebar to view details"}
+              </p>
             </div>
           )}
         </div>

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { motion, type Variants } from "framer-motion";
 import { ArrowRight, Book, Pencil, PenTool, GraduationCap, Laptop, Lightbulb } from "lucide-react";
 import PublicFooter from "@/components/public/PublicFooter";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 
 export default function Home() {
   const locale = useLocale();
@@ -86,11 +87,7 @@ export default function Home() {
         </motion.div>
         
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-3 sm:gap-6 text-sm font-medium">
-          <div className="flex gap-2 sm:gap-4 text-xs sm:text-sm">
-            <button onClick={() => router.replace("/", { locale: "fr" })} className={`transition-colors hover:text-brand-500 ${locale === 'fr' ? 'text-brand-500' : 'text-gray-500 dark:text-gray-400'}`}>FR</button>
-            <span className="text-gray-300 dark:text-gray-700">|</span>
-            <button onClick={() => router.replace("/", { locale: "en" })} className={`transition-colors hover:text-brand-500 ${locale === 'en' ? 'text-brand-500' : 'text-gray-500 dark:text-gray-400'}`}>EN</button>
-          </div>
+          <LanguageSwitcher variant="pill" />
           <Link href="/login" className="hidden sm:block text-gray-700 dark:text-gray-200 hover:text-brand-500 transition-colors">{t("login")}</Link>
           <Link href="/register" className="inline-flex items-center justify-center rounded-full bg-gray-900 px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm text-white transition-all hover:bg-brand-500 hover:shadow-lg dark:bg-white dark:text-gray-900 dark:hover:bg-brand-500 dark:hover:text-white">
             {t("createAccount")}

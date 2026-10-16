@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Settings, User, Bell, Shield, Wallet, Link as LinkIcon, Camera, Loader2, Save, CheckCircle2, XCircle } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { resolveApiUrl, resolveMediaUrl } from '@/lib/api';
 
 interface UserProfile {
@@ -19,6 +20,9 @@ interface UserProfile {
 }
 
 export default function SettingsClient({ token }: { token?: string }) {
+  const locale = useLocale();
+  const isFrench = locale === "fr";
+
   const [activeTab, setActiveTab] = useState<"profile" | "notifications" | "security">("profile");
   
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -85,7 +89,7 @@ export default function SettingsClient({ token }: { token?: string }) {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 1024 * 1024) {
-        showToast("File size must be less than 1MB", "error");
+        showToast(isFrench ? "La taille du fichier doit être inférieure à 1 Mo" : "File size must be less than 1MB", "error");
         return;
       }
       setAvatarFile(file);
@@ -143,15 +147,15 @@ export default function SettingsClient({ token }: { token?: string }) {
 
       if (res.ok) {
         const updatedData = await res.json();
-        showToast("Profile updated successfully!", "success");
+        showToast(isFrench ? "Profil mis à jour avec succès !" : "Profile updated successfully!", "success");
         window.dispatchEvent(new CustomEvent("userProfileUpdated", { detail: updatedData }));
       } else {
         const err = await res.json();
-        showToast(err.detail || "Failed to update profile.", "error");
+        showToast(err.detail || (isFrench ? "Échec de la mise à jour du profil." : "Failed to update profile."), "error");
       }
     } catch (err) {
       console.error(err);
-      showToast("An error occurred while saving.", "error");
+      showToast(isFrench ? "Une erreur est survenue lors de l'enregistrement." : "An error occurred while saving.", "error");
     } finally {
       setSaving(false);
     }
@@ -160,7 +164,7 @@ export default function SettingsClient({ token }: { token?: string }) {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword1 !== newPassword2) {
-      showToast("New passwords do not match", "error");
+      showToast(isFrench ? "Les nouveaux mots de passe ne correspondent pas" : "New passwords do not match", "error");
       return;
     }
     if (!token) return;
@@ -181,17 +185,17 @@ export default function SettingsClient({ token }: { token?: string }) {
       });
 
       if (res.ok) {
-        showToast("Password updated successfully!", "success");
+        showToast(isFrench ? "Mot de passe mis à jour avec succès !" : "Password updated successfully!", "success");
         setOldPassword("");
         setNewPassword1("");
         setNewPassword2("");
       } else {
         const err = await res.json();
-        showToast(err.detail || err.old_password?.[0] || err.new_password1?.[0] || "Failed to update password.", "error");
+        showToast(err.detail || err.old_password?.[0] || err.new_password1?.[0] || (isFrench ? "Échec de la mise à jour du mot de passe." : "Failed to update password."), "error");
       }
     } catch (err) {
       console.error(err);
-      showToast("An error occurred.", "error");
+      showToast(isFrench ? "Une erreur est survenue." : "An error occurred.", "error");
     } finally {
       setIsChangingPassword(false);
     }
@@ -202,12 +206,12 @@ export default function SettingsClient({ token }: { token?: string }) {
     setSaving(true);
     setTimeout(() => {
       setSaving(false);
-      showToast("Notification preferences updated!", "success");
+      showToast(isFrench ? "Préférences de notifications mises à jour !" : "Notification preferences updated!", "success");
     }, 800);
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading settings...</div>;
+    return <div className="p-8 text-center text-gray-500">{isFrench ? "Chargement des paramètres..." : "Loading settings..."}</div>;
   }
 
   return (
@@ -217,8 +221,12 @@ export default function SettingsClient({ token }: { token?: string }) {
           <Settings className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Instructor Settings</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Manage your public profile and preferences</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {isFrench ? "Paramètres de l'instructeur" : "Instructor Settings"}
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {isFrench ? "Gérez votre profil public et vos préférences" : "Manage your public profile and preferences"}
+          </p>
         </div>
       </div>
 
@@ -230,21 +238,21 @@ export default function SettingsClient({ token }: { token?: string }) {
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'profile' ? 'bg-gray-100 dark:bg-gray-800 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
           >
             <User className="w-5 h-5" />
-            Public Profile
+            {isFrench ? "Profil public" : "Public Profile"}
           </button>
           <button 
             onClick={() => setActiveTab('notifications')}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'notifications' ? 'bg-gray-100 dark:bg-gray-800 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
           >
             <Bell className="w-5 h-5" />
-            Notifications
+            {isFrench ? "Notifications" : "Notifications"}
           </button>
           <button 
             onClick={() => setActiveTab('security')}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'security' ? 'bg-gray-100 dark:bg-gray-800 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
           >
             <Shield className="w-5 h-5" />
-            Account Security
+            {isFrench ? "Sécurité du compte" : "Account Security"}
           </button>
         </div>
 
@@ -255,166 +263,192 @@ export default function SettingsClient({ token }: { token?: string }) {
             <>
               {/* Profile Picture */}
               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Profile Picture</h2>
-            
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-              <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <div className="w-24 h-24 bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-full flex items-center justify-center text-3xl font-bold overflow-hidden">
-                  {avatarPreview ? (
-                    <img src={resolveMediaUrl(avatarPreview)} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{(firstName || username || "U").charAt(0).toUpperCase()}</span>
-                  )}
-                </div>
-                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                className="hidden" 
-                accept="image/jpeg, image/png, image/gif" 
-                onChange={handleAvatarChange}
-              />
-              <div className="text-center sm:text-left">
-                <div className="flex gap-3 justify-center sm:justify-start">
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-lg transition-colors text-sm"
-                  >
-                    Upload new
-                  </button>
-                  <button 
-                    onClick={() => { setAvatarPreview(null); setAvatarFile(null); }}
-                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors text-sm"
-                  >
-                    Remove
-                  </button>
-                </div>
-                <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Must be JPEG, GIF or PNG. Maximum size of 1MB.</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Personal Information */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Basic Information</h2>
-            
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">First Name</label>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                  {isFrench ? "Photo de profil" : "Profile Picture"}
+                </h2>
+                
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                    <div className="w-24 h-24 bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-full flex items-center justify-center text-3xl font-bold overflow-hidden">
+                      {avatarPreview ? (
+                        <img src={resolveMediaUrl(avatarPreview)} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{(firstName || username || "U").charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
                   <input 
-                    type="text" 
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none" 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/jpeg, image/png, image/gif" 
+                    onChange={handleAvatarChange}
                   />
+                  <div className="text-center sm:text-left">
+                    <div className="flex gap-3 justify-center sm:justify-start">
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-lg transition-colors text-sm"
+                      >
+                        {isFrench ? "Téléverser" : "Upload new"}
+                      </button>
+                      <button 
+                        onClick={() => { setAvatarPreview(null); setAvatarFile(null); }}
+                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors text-sm"
+                      >
+                        {isFrench ? "Supprimer" : "Remove"}
+                      </button>
+                    </div>
+                    <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                      {isFrench ? "Doit être au format JPEG, GIF ou PNG. Taille maximale 1 Mo." : "Must be JPEG, GIF or PNG. Maximum size of 1MB."}
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Last Name</label>
-                  <input 
-                    type="text" 
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none" 
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Professional Headline</label>
-                <input 
-                  type="text" 
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none" 
-                />
-                <p className="text-xs text-gray-500">This will appear under your name on your instructor profile.</p>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Biography</label>
-                <textarea 
-                  rows={4}
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none resize-none" 
-                />
-                <p className="text-xs text-gray-500">Your bio must have at least 50 words to be published.</p>
-              </div>
-            </div>
-          </div>
+              {/* Personal Information */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                  {isFrench ? "Informations de base" : "Basic Information"}
+                </h2>
+                
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {isFrench ? "Prénom" : "First Name"}
+                      </label>
+                      <input 
+                        type="text" 
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {isFrench ? "Nom" : "Last Name"}
+                      </label>
+                      <input 
+                        type="text" 
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none" 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      {isFrench ? "Titre professionnel" : "Professional Headline"}
+                    </label>
+                    <input 
+                      type="text" 
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none" 
+                    />
+                    <p className="text-xs text-gray-500">
+                      {isFrench ? "Ceci apparaîtra sous votre nom sur votre profil d'instructeur." : "This will appear under your name on your instructor profile."}
+                    </p>
+                  </div>
 
-          {/* Social Links */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Social Links</h2>
-            
-            <div className="space-y-4">
-              <div className="flex rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600 focus-within:ring-2 focus-within:ring-brand-500 transition-shadow">
-                <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-r border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                  <LinkIcon className="w-4 h-4 text-gray-500" />
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      {isFrench ? "Biographie" : "Biography"}
+                    </label>
+                    <textarea 
+                      rows={4}
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none resize-none" 
+                    />
+                    <p className="text-xs text-gray-500">
+                      {isFrench ? "Votre biographie doit comporter au moins 50 mots pour être publiée." : "Your bio must have at least 50 words to be published."}
+                    </p>
+                  </div>
                 </div>
-                <input 
-                  type="text" 
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  className="w-full px-4 py-3 bg-transparent text-gray-900 dark:text-white outline-none" 
-                  placeholder="https://yourwebsite.com" 
-                />
-              </div>
-              
-              <div className="flex rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600 focus-within:ring-2 focus-within:ring-brand-500 transition-shadow">
-                <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-r border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400 w-28">
-                  Twitter
-                </div>
-                <input 
-                  type="text" 
-                  value={twitter}
-                  onChange={(e) => setTwitter(e.target.value)}
-                  className="w-full px-4 py-3 bg-transparent text-gray-900 dark:text-white outline-none" 
-                  placeholder="https://twitter.com/username" 
-                />
               </div>
 
-              <div className="flex rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600 focus-within:ring-2 focus-within:ring-brand-500 transition-shadow">
-                <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-r border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400 w-28">
-                  LinkedIn
+              {/* Social Links */}
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                  {isFrench ? "Réseaux sociaux" : "Social Links"}
+                </h2>
+                
+                <div className="space-y-4">
+                  <div className="flex rounded-xl border border-gray-300 dark:border-gray-600 focus-within:ring-2 focus-within:ring-brand-500 transition-shadow">
+                    <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-r border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                      <LinkIcon className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <input 
+                      type="text" 
+                      value={website}
+                      onChange={(e) => setWebsite(e.target.value)}
+                      className="w-full px-4 py-3 bg-transparent text-gray-900 dark:text-white outline-none" 
+                      placeholder={isFrench ? "https://votresite.com" : "https://yourwebsite.com"} 
+                    />
+                  </div>
+                  
+                  <div className="flex rounded-xl border border-gray-300 dark:border-gray-600 focus-within:ring-2 focus-within:ring-brand-500 transition-shadow">
+                    <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-r border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400 w-28">
+                      Twitter
+                    </div>
+                    <input 
+                      type="text" 
+                      value={twitter}
+                      onChange={(e) => setTwitter(e.target.value)}
+                      className="w-full px-4 py-3 bg-transparent text-gray-900 dark:text-white outline-none" 
+                      placeholder="https://twitter.com/username" 
+                    />
+                  </div>
+
+                  <div className="flex rounded-xl border border-gray-300 dark:border-gray-600 focus-within:ring-2 focus-within:ring-brand-500 transition-shadow">
+                    <div className="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-r border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-400 w-28">
+                      LinkedIn
+                    </div>
+                    <input 
+                      type="text" 
+                      value={linkedin}
+                      onChange={(e) => setLinkedin(e.target.value)}
+                      className="w-full px-4 py-3 bg-transparent text-gray-900 dark:text-white outline-none" 
+                      placeholder="https://linkedin.com/in/username" 
+                    />
+                  </div>
                 </div>
-                <input 
-                  type="text" 
-                  value={linkedin}
-                  onChange={(e) => setLinkedin(e.target.value)}
-                  className="w-full px-4 py-3 bg-transparent text-gray-900 dark:text-white outline-none" 
-                  placeholder="https://linkedin.com/in/username" 
-                />
+                
+                <div className="pt-8 mt-2 flex justify-end">
+                  <button 
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex items-center gap-2 px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-xl transition-colors shadow-sm disabled:opacity-50"
+                  >
+                    {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                    {saving ? (isFrench ? "Enregistrement..." : "Saving...") : (isFrench ? "Enregistrer les modifications" : "Save All Changes")}
+                  </button>
+                </div>
               </div>
-            </div>
-            
-            <div className="pt-8 mt-2 flex justify-end">
-              <button 
-                onClick={handleSave}
-                disabled={saving}
-                className="flex items-center gap-2 px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-xl transition-colors shadow-sm disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                {saving ? "Saving..." : "Save All Changes"}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+            </>
+          )}
 
           {activeTab === 'notifications' && (
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Email Notifications</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                {isFrench ? "Notifications par e-mail" : "Email Notifications"}
+              </h2>
               
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Instructor Updates</h3>
-                    <p className="text-xs text-gray-500 mt-1">Get emails when a student enrolls or asks a question.</p>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {isFrench ? "Mises à jour instructeur" : "Instructor Updates"}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {isFrench ? "Recevez des e-mails lorsqu'un étudiant s'inscrit ou pose une question." : "Get emails when a student enrolls or asks a question."}
+                    </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" checked={emailAlerts} onChange={(e) => setEmailAlerts(e.target.checked)} />
@@ -424,8 +458,12 @@ export default function SettingsClient({ token }: { token?: string }) {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Marketing Emails</h3>
-                    <p className="text-xs text-gray-500 mt-1">Receive promotional emails, discounts, and offers.</p>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {isFrench ? "E-mails marketing" : "Marketing Emails"}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {isFrench ? "Recevez des offres promotionnelles et des réductions." : "Receive promotional emails, discounts, and offers."}
+                    </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" checked={marketingEmails} onChange={(e) => setMarketingEmails(e.target.checked)} />
@@ -435,8 +473,12 @@ export default function SettingsClient({ token }: { token?: string }) {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Platform Tips</h3>
-                    <p className="text-xs text-gray-500 mt-1">Get advice on creating better courses and marketing.</p>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {isFrench ? "Conseils de la plateforme" : "Platform Tips"}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {isFrench ? "Recevez des conseils pour créer de meilleurs cours et optimiser vos ventes." : "Get advice on creating better courses and marketing."}
+                    </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" checked={newCourseTips} onChange={(e) => setNewCourseTips(e.target.checked)} />
@@ -452,7 +494,7 @@ export default function SettingsClient({ token }: { token?: string }) {
                   className="flex items-center gap-2 px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-xl transition-colors shadow-sm disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                  {saving ? "Saving..." : "Save Preferences"}
+                  {saving ? (isFrench ? "Enregistrement..." : "Saving...") : (isFrench ? "Enregistrer les préférences" : "Save Preferences")}
                 </button>
               </div>
             </div>
@@ -460,11 +502,15 @@ export default function SettingsClient({ token }: { token?: string }) {
 
           {activeTab === 'security' && (
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Change Password</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                {isFrench ? "Modifier le mot de passe" : "Change Password"}
+              </h2>
               
               <form onSubmit={handlePasswordChange} className="space-y-6 max-w-md">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Current Password</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {isFrench ? "Mot de passe actuel" : "Current Password"}
+                  </label>
                   <input 
                     type="password" 
                     required
@@ -475,9 +521,11 @@ export default function SettingsClient({ token }: { token?: string }) {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">New Password</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {isFrench ? "Nouveau mot de passe" : "New Password"}
+                  </label>
                   <input 
-                    type="password"
+                    type="password" 
                     required
                     value={newPassword1}
                     onChange={(e) => setNewPassword1(e.target.value)}
@@ -486,7 +534,9 @@ export default function SettingsClient({ token }: { token?: string }) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Confirm New Password</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {isFrench ? "Confirmer le nouveau mot de passe" : "Confirm New Password"}
+                  </label>
                   <input 
                     type="password" 
                     required
@@ -503,7 +553,7 @@ export default function SettingsClient({ token }: { token?: string }) {
                     className="flex items-center gap-2 px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-xl transition-colors shadow-sm disabled:opacity-50"
                   >
                     {isChangingPassword ? <Loader2 className="w-5 h-5 animate-spin" /> : <Shield className="w-5 h-5" />}
-                    {isChangingPassword ? "Updating..." : "Update Password"}
+                    {isChangingPassword ? (isFrench ? "Mise à jour..." : "Updating...") : (isFrench ? "Mettre à jour le mot de passe" : "Update Password")}
                   </button>
                 </div>
               </form>
@@ -519,7 +569,7 @@ export default function SettingsClient({ token }: { token?: string }) {
             className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border ${
               toast.type === "success"
                 ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300"
-                : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:red-green-800 text-red-800 dark:text-red-300"
+                : "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-300"
             }`}
           >
             {toast.type === "success" ? (

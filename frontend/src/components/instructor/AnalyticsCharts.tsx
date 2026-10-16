@@ -1,6 +1,7 @@
 "use client";
 
 import { Pie, PieChart, CartesianGrid, XAxis, YAxis, Legend, Line, Bar, ComposedChart, Cell, Area, AreaChart } from "recharts";
+import { useLocale } from "next-intl";
 
 import {
   Card,
@@ -16,8 +17,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
-
-
 const performanceConfig = {
   revenue: {
     label: "Course revenue (€)",
@@ -30,19 +29,28 @@ const performanceConfig = {
 } satisfies ChartConfig;
 
 export function SalesPerformanceChart({ data }: { data?: any[] }) {
+  const locale = useLocale();
+  const isFrench = locale === "fr";
+
   const chartData = data?.length ? data.map(d => ({
     ...d,
     target: d.revenue > 0 ? d.revenue * 1.1 : 100 // Add a dummy target for the visual line
   })) : [
-    { month: "Jan", revenue: 0, target: 100 },
-    { month: "Feb", revenue: 0, target: 100 }
+    { month: isFrench ? "Jan" : "Jan", revenue: 0, target: 100 },
+    { month: isFrench ? "Fév" : "Feb", revenue: 0, target: 100 }
   ];
 
   return (
     <Card className="rounded-2xl border border-gray-200 bg-white shadow-sm ring-0 dark:border-gray-800 dark:bg-white/[0.03]">
       <CardHeader>
-        <CardTitle className="text-gray-800 dark:text-white/90">Revenue performance</CardTitle>
-        <CardDescription>Monthly revenue from enrolled course payments compared with target.</CardDescription>
+        <CardTitle className="text-gray-800 dark:text-white/90">
+          {isFrench ? "Performance des revenus" : "Revenue performance"}
+        </CardTitle>
+        <CardDescription>
+          {isFrench 
+            ? "Revenus mensuels issus des inscriptions aux cours comparés aux objectifs."
+            : "Monthly revenue from enrolled course payments compared with target."}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={performanceConfig} className="aspect-[2/1]">
@@ -133,19 +141,25 @@ export function RevenueAreaChart({ data }: { data?: any[] }) {
   );
 }
 
-
 export function RevenueDistributionChart({ data }: { data: Array<{ course: string; revenue: number; learners: number; completionRate: number; fill: string }> }) {
+  const locale = useLocale();
+  const isFrench = locale === "fr";
+
   const distributionConfig = {
     revenue: {
-      label: "Revenue",
+      label: isFrench ? "Revenus" : "Revenue",
     },
   } satisfies ChartConfig;
 
   return (
     <Card className="flex flex-col rounded-2xl border border-gray-200 bg-white shadow-sm ring-0 dark:border-gray-800 dark:bg-white/[0.03]">
       <CardHeader>
-        <CardTitle className="text-gray-800 dark:text-white/90">Revenue split</CardTitle>
-        <CardDescription>Distribution by published course</CardDescription>
+        <CardTitle className="text-gray-800 dark:text-white/90">
+          {isFrench ? "Répartition des revenus" : "Revenue split"}
+        </CardTitle>
+        <CardDescription>
+          {isFrench ? "Distribution par cours publié" : "Distribution by published course"}
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-6">
         <ChartContainer config={distributionConfig} className="mx-auto aspect-square min-h-[300px]">

@@ -9,7 +9,13 @@ export const metadata: Metadata = {
   description: "Votre espace d'apprentissage personnel",
 };
 
-export default async function StudentDashboard() {
+export default async function StudentDashboard({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const isFrench = locale === "fr";
   const t = await getTranslations("studentDashboard");
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token")?.value;
@@ -117,10 +123,16 @@ export default async function StudentDashboard() {
           ) : (
             <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50/50 p-8 text-center dark:border-gray-700 dark:bg-gray-800/30">
               <BookX className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No courses yet</h3>
-              <p className="text-gray-500 mb-4">You haven't enrolled in any courses yet. Explore our catalog to start learning!</p>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                {isFrench ? "Aucun cours pour le moment" : "No courses yet"}
+              </h3>
+              <p className="text-gray-500 mb-4">
+                {isFrench
+                  ? "Vous n'êtes inscrit à aucun cours pour l'instant. Explorez notre catalogue pour commencer à apprendre !"
+                  : "You haven't enrolled in any courses yet. Explore our catalog to start learning!"}
+              </p>
               <Link href="/student/catalog" className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-600">
-                <BookOpen className="h-4 w-4" /> Browse Catalog
+                <BookOpen className="h-4 w-4" /> {isFrench ? "Parcourir le catalogue" : "Browse Catalog"}
               </Link>
             </div>
           )}

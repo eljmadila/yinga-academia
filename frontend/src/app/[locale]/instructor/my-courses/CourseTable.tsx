@@ -14,6 +14,7 @@ import {
   Globe,
 } from "lucide-react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import { resolveApiUrl, resolveMediaUrl, getClientAccessToken } from "@/lib/api";
 
 interface Course {
@@ -43,6 +44,8 @@ const getThumbnailUrl = (thumb?: string | null) => {
 };
 
 export default function CourseTable({ initialCourses, token }: CourseTableProps) {
+  const locale = useLocale();
+  const isFrench = locale === "fr";
   const [courses, setCourses] = useState<Course[]>(initialCourses);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("all");
@@ -92,16 +95,20 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
         isOpen: true,
         type,
         courseId,
-        title: "Delete Course",
-        message: "Are you sure you want to delete this course? This action cannot be undone.",
+        title: isFrench ? "Supprimer la formation" : "Delete Course",
+        message: isFrench
+          ? "Êtes-vous sûr de vouloir supprimer cette formation ? Cette action est irréversible."
+          : "Are you sure you want to delete this course? This action cannot be undone.",
       });
     } else {
       setDialog({
         isOpen: true,
         type,
         courseId,
-        title: "Publish Course",
-        message: "Are you sure you want to publish this course? It will become visible to students.",
+        title: isFrench ? "Publier la formation" : "Publish Course",
+        message: isFrench
+          ? "Êtes-vous sûr de vouloir publier cette formation ? Elle deviendra visible pour tous les étudiants."
+          : "Are you sure you want to publish this course? It will become visible to students.",
       });
     }
   };
@@ -130,13 +137,13 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
       });
       if (res.ok) {
         setCourses((prev) => prev.filter((c) => String(c.id) !== idStr));
-        showToast("Course deleted successfully", "success");
+        showToast(isFrench ? "Formation supprimée avec succès" : "Course deleted successfully", "success");
       } else {
-        showToast("Failed to delete course.", "error");
+        showToast(isFrench ? "Échec de la suppression de la formation." : "Failed to delete course.", "error");
       }
     } catch (err) {
       console.error(err);
-      showToast("An error occurred while deleting the course.", "error");
+      showToast(isFrench ? "Une erreur est survenue lors de la suppression." : "An error occurred while deleting the course.", "error");
     } finally {
       setIsDeleting(null);
     }
@@ -158,13 +165,13 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
         setCourses((prev) =>
           prev.map((c) => (String(c.id) === idStr ? { ...c, is_published: true, status: "PUBLISHED" } : c))
         );
-        showToast("Course published successfully!", "success");
+        showToast(isFrench ? "Formation publiée avec succès !" : "Course published successfully!", "success");
       } else {
-        showToast("Failed to publish course.", "error");
+        showToast(isFrench ? "Échec de la publication de la formation." : "Failed to publish course.", "error");
       }
     } catch (err) {
       console.error(err);
-      showToast("An error occurred while publishing the course.", "error");
+      showToast(isFrench ? "Une erreur est survenue lors de la publication." : "An error occurred while publishing the course.", "error");
     } finally {
       setIsPublishing(null);
     }
@@ -183,9 +190,9 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
   const draftCount = courses.length - publishedCount;
 
   const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: "all", label: "All Courses", count: courses.length },
-    { key: "published", label: "Published", count: publishedCount },
-    { key: "drafts", label: "Drafts", count: draftCount },
+    { key: "all", label: isFrench ? "Toutes les formations" : "All Courses", count: courses.length },
+    { key: "published", label: isFrench ? "Publiées" : "Published", count: publishedCount },
+    { key: "drafts", label: isFrench ? "Brouillons" : "Drafts", count: draftCount },
   ];
 
   return (
@@ -214,15 +221,16 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search your courses..."
+              placeholder={isFrench ? "Rechercher parmi vos formations..." : "Search your courses..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 dark:text-white"
             />
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-            Showing {filteredCourses.length}{" "}
-            {filteredCourses.length === 1 ? "course" : "courses"}
+            {isFrench
+              ? `Affichage de ${filteredCourses.length} ${filteredCourses.length === 1 ? "formation" : "formations"}`
+              : `Showing ${filteredCourses.length} ${filteredCourses.length === 1 ? "course" : "courses"}`}
           </div>
         </div>
 
@@ -231,11 +239,11 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">
-                <th className="px-6 py-4 font-semibold">Course</th>
-                <th className="px-6 py-4 font-semibold">Status</th>
-                <th className="px-6 py-4 font-semibold">Students</th>
-                <th className="px-6 py-4 font-semibold">Price</th>
-                <th className="px-6 py-4 font-semibold text-right">Actions</th>
+                <th className="px-6 py-4 font-semibold">{isFrench ? "Formation" : "Course"}</th>
+                <th className="px-6 py-4 font-semibold">{isFrench ? "Statut" : "Status"}</th>
+                <th className="px-6 py-4 font-semibold">{isFrench ? "Étudiants" : "Students"}</th>
+                <th className="px-6 py-4 font-semibold">{isFrench ? "Prix" : "Price"}</th>
+                <th className="px-6 py-4 font-semibold text-right">{isFrench ? "Actions" : "Actions"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700/50">
@@ -270,7 +278,7 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
                               {course.average_rating || "0.0"}
                             </span>
                             <span>•</span>
-                            <span>{course.category?.name || "General"}</span>
+                            <span>{course.category?.name || (isFrench ? "Général" : "General")}</span>
                           </div>
                         </div>
                       </div>
@@ -279,11 +287,11 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
                     <td className="px-6 py-4">
                       {course.is_published ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                          <CheckCircle className="w-3.5 h-3.5" /> Published
+                          <CheckCircle className="w-3.5 h-3.5" /> {isFrench ? "Publié" : "Published"}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400">
-                          <XCircle className="w-3.5 h-3.5" /> Draft
+                          <XCircle className="w-3.5 h-3.5" /> {isFrench ? "Brouillon" : "Draft"}
                         </span>
                       )}
                     </td>
@@ -299,7 +307,7 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
 
                     <td className="px-6 py-4">
                       <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {Number(course.price) > 0 ? `$${course.price}` : "Free"}
+                        {Number(course.price) > 0 ? `$${course.price}` : (isFrench ? "Gratuit" : "Free")}
                       </span>
                     </td>
 
@@ -309,7 +317,7 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
                         <Link
                           href={`/instructor/dashboard?course=${course.id}`}
                           className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                          title="View Analytics"
+                          title={isFrench ? "Voir les statistiques" : "View Analytics"}
                         >
                           <BarChart className="w-4 h-4" />
                         </Link>
@@ -324,7 +332,7 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
                                 ? "text-gray-400 cursor-not-allowed"
                                 : "text-gray-500 hover:text-green-600 hover:bg-green-50 dark:text-gray-400 dark:hover:text-green-400 dark:hover:bg-green-900/20"
                             }`}
-                            title="Publish Course"
+                            title={isFrench ? "Publier la formation" : "Publish Course"}
                           >
                             <Globe className="w-4 h-4" />
                           </button>
@@ -332,9 +340,9 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
 
                         {/* Edit */}
                         <Link
-                          href={`/instructor/create-course?edit=${course.id}`}
+                          href={`/instructor/courses/${course.id}/edit`}
                           className="p-2 text-gray-500 hover:text-brand-600 hover:bg-brand-50 dark:text-gray-400 dark:hover:text-brand-400 dark:hover:bg-brand-900/20 rounded-lg transition-colors"
-                          title="Edit Course"
+                          title={isFrench ? "Modifier la formation" : "Edit Course"}
                         >
                           <Edit3 className="w-4 h-4" />
                         </Link>
@@ -348,7 +356,7 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
                               ? "text-gray-400 cursor-not-allowed"
                               : "text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-red-900/20"
                           }`}
-                          title="Delete Course"
+                          title={isFrench ? "Supprimer la formation" : "Delete Course"}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -361,19 +369,19 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
                   <td colSpan={5} className="px-6 py-12 text-center">
                     <BookOpen className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                      No courses found
+                      {isFrench ? "Aucune formation trouvée" : "No courses found"}
                     </h3>
                     <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
                       {search
-                        ? "Try adjusting your search terms."
-                        : "You haven't created any courses yet."}
+                        ? (isFrench ? "Essayez d'ajuster vos termes de recherche." : "Try adjusting your search terms.")
+                        : (isFrench ? "Vous n'avez pas encore créé de formation." : "You haven't created any courses yet.")}
                     </p>
                     {!search && (
                       <Link
                         href="/instructor/create-course"
                         className="inline-flex px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-xl transition-colors text-sm"
                       >
-                        Create your first course
+                        {isFrench ? "Créer votre première formation" : "Create your first course"}
                       </Link>
                     )}
                   </td>
@@ -399,7 +407,7 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
                 onClick={() => setDialog({ ...dialog, isOpen: false })}
                 className="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
-                Cancel
+                {isFrench ? "Annuler" : "Cancel"}
               </button>
               <button
                 onClick={handleConfirmDialog}
@@ -409,7 +417,9 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
                     : "bg-brand-500 hover:bg-brand-600 focus:ring-2 focus:ring-brand-500/50"
                 }`}
               >
-                {dialog.type === "delete" ? "Delete" : "Publish"}
+                {dialog.type === "delete"
+                  ? (isFrench ? "Supprimer" : "Delete")
+                  : (isFrench ? "Publier" : "Publish")}
               </button>
             </div>
           </div>

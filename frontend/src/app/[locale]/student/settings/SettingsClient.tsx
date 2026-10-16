@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { Settings, User, Bell, Shield, Link as LinkIcon, Camera, Loader2, Save, CheckCircle2, XCircle } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { resolveApiUrl, resolveMediaUrl } from '@/lib/api';
 
 interface UserProfile {
@@ -22,6 +23,8 @@ interface UserProfile {
 }
 
 export default function SettingsClient({ token }: { token?: string }) {
+  const locale = useLocale();
+  const isFrench = locale === "fr";
   const [activeTab, setActiveTab] = useState<"profile" | "notifications" | "security">("profile");
   
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -93,7 +96,7 @@ export default function SettingsClient({ token }: { token?: string }) {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 1024 * 1024) {
-        showToast("File size must be less than 1MB", "error");
+        showToast(isFrench ? "La taille du fichier doit être inférieure à 1 Mo" : "File size must be less than 1MB", "error");
         return;
       }
       setAvatarFile(file);
@@ -151,15 +154,15 @@ export default function SettingsClient({ token }: { token?: string }) {
 
       if (res.ok) {
         const updatedData = await res.json();
-        showToast("Profile updated successfully!", "success");
+        showToast(isFrench ? "Profil mis à jour avec succès !" : "Profile updated successfully!", "success");
         window.dispatchEvent(new CustomEvent("userProfileUpdated", { detail: updatedData }));
       } else {
         const err = await res.json();
-        showToast(err.detail || "Failed to update profile.", "error");
+        showToast(err.detail || (isFrench ? "Échec de la mise à jour du profil." : "Failed to update profile."), "error");
       }
     } catch (err) {
       console.error(err);
-      showToast("An error occurred while saving.", "error");
+      showToast(isFrench ? "Une erreur s'est produite lors de l'enregistrement." : "An error occurred while saving.", "error");
     } finally {
       setSaving(false);
     }
@@ -168,7 +171,7 @@ export default function SettingsClient({ token }: { token?: string }) {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword1 !== newPassword2) {
-      showToast("New passwords do not match", "error");
+      showToast(isFrench ? "Les nouveaux mots de passe ne correspondent pas" : "New passwords do not match", "error");
       return;
     }
     if (!token) return;
@@ -189,17 +192,17 @@ export default function SettingsClient({ token }: { token?: string }) {
       });
 
       if (res.ok) {
-        showToast("Password updated successfully!", "success");
+        showToast(isFrench ? "Mot de passe mis à jour avec succès !" : "Password updated successfully!", "success");
         setOldPassword("");
         setNewPassword1("");
         setNewPassword2("");
       } else {
         const err = await res.json();
-        showToast(err.detail || err.old_password?.[0] || err.new_password1?.[0] || "Failed to update password.", "error");
+        showToast(err.detail || err.old_password?.[0] || err.new_password1?.[0] || (isFrench ? "Échec de la mise à jour du mot de passe." : "Failed to update password."), "error");
       }
     } catch (err) {
       console.error(err);
-      showToast("An error occurred.", "error");
+      showToast(isFrench ? "Une erreur est survenue." : "An error occurred.", "error");
     } finally {
       setIsChangingPassword(false);
     }
@@ -209,12 +212,12 @@ export default function SettingsClient({ token }: { token?: string }) {
     setSaving(true);
     setTimeout(() => {
       setSaving(false);
-      showToast("Notification preferences updated!", "success");
+      showToast(isFrench ? "Préférences de notifications enregistrées !" : "Notification preferences updated!", "success");
     }, 800);
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading settings...</div>;
+    return <div className="p-8 text-center text-gray-500">{isFrench ? "Chargement des paramètres..." : "Loading settings..."}</div>;
   }
 
   return (
@@ -224,8 +227,14 @@ export default function SettingsClient({ token }: { token?: string }) {
           <Settings className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Student Settings</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Manage your profile, learning preferences, and security</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {isFrench ? "Paramètres Étudiant" : "Student Settings"}
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {isFrench
+              ? "Gérez votre profil, vos préférences d'apprentissage et votre sécurité"
+              : "Manage your profile, learning preferences, and security"}
+          </p>
         </div>
       </div>
 
@@ -237,21 +246,21 @@ export default function SettingsClient({ token }: { token?: string }) {
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'profile' ? 'bg-gray-100 dark:bg-gray-800 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
           >
             <User className="w-5 h-5" />
-            Public Profile
+            {isFrench ? "Profil public" : "Public Profile"}
           </button>
           <button 
             onClick={() => setActiveTab('notifications')}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'notifications' ? 'bg-gray-100 dark:bg-gray-800 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
           >
             <Bell className="w-5 h-5" />
-            Notifications
+            {isFrench ? "Notifications" : "Notifications"}
           </button>
           <button 
             onClick={() => setActiveTab('security')}
             className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${activeTab === 'security' ? 'bg-gray-100 dark:bg-gray-800 text-brand-600 dark:text-brand-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
           >
             <Shield className="w-5 h-5" />
-            Account Security
+            {isFrench ? "Sécurité du compte" : "Account Security"}
           </button>
         </div>
 
@@ -262,7 +271,9 @@ export default function SettingsClient({ token }: { token?: string }) {
             <>
               {/* Profile Picture */}
               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Profile Picture</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                  {isFrench ? "Photo de profil" : "Profile Picture"}
+                </h2>
                 
                 <div className="flex flex-col sm:flex-row items-center gap-6">
                   <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
@@ -294,28 +305,34 @@ export default function SettingsClient({ token }: { token?: string }) {
                         onClick={() => fileInputRef.current?.click()}
                         className="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-lg transition-colors text-sm"
                       >
-                        Upload new
+                        {isFrench ? "Téléverser" : "Upload new"}
                       </button>
                       <button 
                         onClick={() => { setAvatarPreview(null); setAvatarFile(null); }}
                         className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition-colors text-sm"
                       >
-                        Remove
+                        {isFrench ? "Supprimer" : "Remove"}
                       </button>
                     </div>
-                    <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Must be JPEG, GIF or PNG. Maximum size of 1MB.</p>
+                    <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                      {isFrench ? "Format JPEG, GIF ou PNG. Taille maximale 1 Mo." : "Must be JPEG, GIF or PNG. Maximum size of 1MB."}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Personal Information */}
               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Basic Information</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                  {isFrench ? "Informations de base" : "Basic Information"}
+                </h2>
                 
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">First Name</label>
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {isFrench ? "Prénom" : "First Name"}
+                      </label>
                       <input 
                         type="text" 
                         value={firstName}
@@ -324,7 +341,9 @@ export default function SettingsClient({ token }: { token?: string }) {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Last Name</label>
+                      <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {isFrench ? "Nom" : "Last Name"}
+                      </label>
                       <input 
                         type="text" 
                         value={lastName}
@@ -335,34 +354,44 @@ export default function SettingsClient({ token }: { token?: string }) {
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Learning Headline / Goal</label>
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      {isFrench ? "Titre / Objectif d'apprentissage" : "Learning Headline / Goal"}
+                    </label>
                     <input 
                       type="text" 
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g. Aspiring Full-Stack Developer | Data Science Enthusiast"
+                      placeholder={isFrench ? "ex. Développeur Full-Stack aspirant | Passionné de Data Science" : "e.g. Aspiring Full-Stack Developer | Data Science Enthusiast"}
                       className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none" 
                     />
-                    <p className="text-xs text-gray-500">A brief headline representing your learning objectives or field of interest.</p>
+                    <p className="text-xs text-gray-500">
+                      {isFrench ? "Un court titre décrivant vos objectifs d'apprentissage ou votre domaine." : "A brief headline representing your learning objectives or field of interest."}
+                    </p>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Biography</label>
+                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      {isFrench ? "Biographie" : "Biography"}
+                    </label>
                     <textarea 
                       rows={4}
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
-                      placeholder="Tell instructors and fellow students a little about yourself, your background, and your learning goals."
+                      placeholder={isFrench ? "Présentez-vous aux formateurs et aux autres étudiants, vos objectifs d'apprentissage..." : "Tell instructors and fellow students a little about yourself, your background, and your learning goals."}
                       className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none resize-none" 
                     />
-                    <p className="text-xs text-gray-500">Brief description that will appear on your public profile and Q&A interactions.</p>
+                    <p className="text-xs text-gray-500">
+                      {isFrench ? "Courte description qui apparaîtra sur votre profil public et vos questions." : "Brief description that will appear on your public profile and Q&A interactions."}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Social Links */}
               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Social & Portfolio Links</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                  {isFrench ? "Réseaux sociaux & Portfolio" : "Social & Portfolio Links"}
+                </h2>
                 
                 <div className="space-y-4">
                   <div className="flex rounded-xl overflow-hidden border border-gray-300 dark:border-gray-600 focus-within:ring-2 focus-within:ring-brand-500 transition-shadow">
@@ -425,7 +454,7 @@ export default function SettingsClient({ token }: { token?: string }) {
                     className="flex items-center gap-2 px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-xl transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
                   >
                     {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                    {saving ? "Saving..." : "Save All Changes"}
+                    {saving ? (isFrench ? "Enregistrement..." : "Saving...") : (isFrench ? "Enregistrer les modifications" : "Save All Changes")}
                   </button>
                 </div>
               </div>
@@ -434,13 +463,21 @@ export default function SettingsClient({ token }: { token?: string }) {
 
           {activeTab === 'notifications' && (
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Email Notifications</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                {isFrench ? "Notifications par e-mail" : "Email Notifications"}
+              </h2>
               
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Course & Lecture Updates</h3>
-                    <p className="text-xs text-gray-500 mt-1">Get notified when instructors publish new lessons, assignments, or announcements.</p>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {isFrench ? "Mises à jour des cours & leçons" : "Course & Lecture Updates"}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {isFrench
+                        ? "Recevez des alertes quand les formateurs publient de nouvelles leçons ou annonces."
+                        : "Get notified when instructors publish new lessons, assignments, or announcements."}
+                    </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" checked={courseUpdates} onChange={(e) => setCourseUpdates(e.target.checked)} />
@@ -450,8 +487,14 @@ export default function SettingsClient({ token }: { token?: string }) {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Learning Reminders & Streaks</h3>
-                    <p className="text-xs text-gray-500 mt-1">Receive weekly reminders to stay consistent with your learning progress.</p>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {isFrench ? "Rappels d'apprentissage & séries" : "Learning Reminders & Streaks"}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {isFrench
+                        ? "Recevez des rappels pour maintenir votre rythme d'apprentissage régulier."
+                        : "Receive weekly reminders to stay consistent with your learning progress."}
+                    </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" checked={learningReminders} onChange={(e) => setLearningReminders(e.target.checked)} />
@@ -461,8 +504,14 @@ export default function SettingsClient({ token }: { token?: string }) {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Promotions & Recommendations</h3>
-                    <p className="text-xs text-gray-500 mt-1">Receive recommendations for courses tailored to your interests and exclusive discounts.</p>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {isFrench ? "Promotions & Recommandations" : "Promotions & Recommendations"}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {isFrench
+                        ? "Recevez des suggestions de cours selon vos intérêts et des offres exclusives."
+                        : "Receive recommendations for courses tailored to your interests and exclusive discounts."}
+                    </p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" checked={marketingEmails} onChange={(e) => setMarketingEmails(e.target.checked)} />
@@ -478,7 +527,7 @@ export default function SettingsClient({ token }: { token?: string }) {
                   className="flex items-center gap-2 px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-xl transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                  {saving ? "Saving..." : "Save Preferences"}
+                  {saving ? (isFrench ? "Enregistrement..." : "Saving...") : (isFrench ? "Enregistrer les préférences" : "Save Preferences")}
                 </button>
               </div>
             </div>
@@ -486,11 +535,15 @@ export default function SettingsClient({ token }: { token?: string }) {
 
           {activeTab === 'security' && (
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Change Password</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                {isFrench ? "Changer le mot de passe" : "Change Password"}
+              </h2>
               
               <form onSubmit={handlePasswordChange} className="space-y-6 max-w-md">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Current Password</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {isFrench ? "Mot de passe actuel" : "Current Password"}
+                  </label>
                   <input 
                     type="password" 
                     required
@@ -501,7 +554,9 @@ export default function SettingsClient({ token }: { token?: string }) {
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">New Password</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {isFrench ? "Nouveau mot de passe" : "New Password"}
+                  </label>
                   <input 
                     type="password" 
                     required
@@ -512,7 +567,9 @@ export default function SettingsClient({ token }: { token?: string }) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Confirm New Password</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {isFrench ? "Confirmer le nouveau mot de passe" : "Confirm New Password"}
+                  </label>
                   <input 
                     type="password" 
                     required
@@ -529,7 +586,7 @@ export default function SettingsClient({ token }: { token?: string }) {
                     className="flex items-center gap-2 px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-xl transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
                   >
                     {isChangingPassword ? <Loader2 className="w-5 h-5 animate-spin" /> : <Shield className="w-5 h-5" />}
-                    {isChangingPassword ? "Updating..." : "Update Password"}
+                    {isChangingPassword ? (isFrench ? "Mise à jour..." : "Updating...") : (isFrench ? "Mettre à jour le mot de passe" : "Update Password")}
                   </button>
                 </div>
               </form>

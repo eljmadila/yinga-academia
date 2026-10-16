@@ -6,6 +6,7 @@ import {
   PlayCircle, CheckCircle, Circle, ChevronDown, ChevronUp, MessageSquare, FileText,
   ChevronLeft, ChevronRight, Award, Clock, Lock, BookOpen, StickyNote, Trash2, Send, Loader2, X, CheckCircle2,
 } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import VideoPlayer, { VideoPlayerHandle, formatTime } from './VideoPlayer';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
@@ -56,6 +57,8 @@ const getLessonVideo = (lesson: any) =>
   null;
 
 export default function LessonClient({ course, modules, initialLessonId, initialProgress, isEnrolled }: LessonClientProps) {
+  const locale = useLocale();
+  const isFrench = locale === "fr";
   const playerRef = useRef<VideoPlayerHandle>(null);
   const [activeLessonId, setActiveLessonId] = useState(initialLessonId);
   const [activeTab, setActiveTab] = useState<'overview' | 'qa' | 'notes'>('overview');
@@ -186,7 +189,11 @@ export default function LessonClient({ course, modules, initialLessonId, initial
   const startAt = progress[String(activeLesson?.id)]?.current_timecode || 0;
 
   if (!activeLesson) {
-    return <div className="p-8 text-center text-gray-500">This course has no lessons yet.</div>;
+    return (
+      <div className="p-8 text-center text-gray-500">
+        {isFrench ? "Cette formation n'a pas encore de leçons." : "This course has no lessons yet."}
+      </div>
+    );
   }
 
   return (
@@ -197,10 +204,12 @@ export default function LessonClient({ course, modules, initialLessonId, initial
           <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-900/20 px-4 py-3">
             <div className="flex items-center gap-3 text-green-800 dark:text-green-300">
               <Award className="w-6 h-6" />
-              <p className="text-sm font-semibold">Congratulations! You completed this course.</p>
+              <p className="text-sm font-semibold">
+                {isFrench ? "Félicitations ! Vous avez terminé cette formation." : "Congratulations! You completed this course."}
+              </p>
             </div>
             <Link href={`/student/courses/${course.id}/certificate`} className="text-sm font-semibold text-green-700 dark:text-green-400 hover:underline whitespace-nowrap">
-              Get certificate →
+              {isFrench ? "Obtenir le certificat →" : "Get certificate →"}
             </Link>
           </div>
         )}
@@ -223,14 +232,16 @@ export default function LessonClient({ course, modules, initialLessonId, initial
           {/* Up-next overlay */}
           {nextCountdown !== null && nextLesson && (
             <div className="absolute inset-0 rounded-2xl bg-black/85 flex flex-col items-center justify-center text-center p-6 z-10">
-              <p className="text-white/60 text-sm uppercase tracking-wider mb-2">Up next in {nextCountdown}s</p>
+              <p className="text-white/60 text-sm uppercase tracking-wider mb-2">
+                {isFrench ? `Suivant dans ${nextCountdown}s` : `Up next in ${nextCountdown}s`}
+              </p>
               <p className="text-white text-xl font-bold mb-6 max-w-md">{nextLesson.title}</p>
               <div className="flex gap-3">
                 <button onClick={() => setNextCountdown(null)} className="px-5 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium flex items-center gap-2">
-                  <X className="w-4 h-4" /> Cancel
+                  <X className="w-4 h-4" /> {isFrench ? "Annuler" : "Cancel"}
                 </button>
                 <button onClick={() => goToLesson(nextLesson)} className="px-5 py-2.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold flex items-center gap-2">
-                  <PlayCircle className="w-4 h-4" /> Play now
+                  <PlayCircle className="w-4 h-4" /> {isFrench ? "Lire maintenant" : "Play now"}
                 </button>
               </div>
             </div>
@@ -241,7 +252,7 @@ export default function LessonClient({ course, modules, initialLessonId, initial
         <div className="mt-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-              Lesson {activeIndex + 1} of {allLessons.length}
+              {isFrench ? `Leçon ${activeIndex + 1} sur ${allLessons.length}` : `Lesson ${activeIndex + 1} of ${allLessons.length}`}
               {activeLesson.duration_minutes ? <> · {activeLesson.duration_minutes} min</> : null}
             </p>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">{activeLesson.title}</h2>
@@ -258,7 +269,7 @@ export default function LessonClient({ course, modules, initialLessonId, initial
               }`}
             >
               {markingComplete ? <Loader2 className="w-5 h-5 animate-spin" /> : isActiveCompleted ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
-              {isActiveCompleted ? "Completed" : "Mark as complete"}
+              {isActiveCompleted ? (isFrench ? "Terminé" : "Completed") : (isFrench ? "Marquer comme terminé" : "Mark as complete")}
             </button>
           )}
         </div>
@@ -270,23 +281,23 @@ export default function LessonClient({ course, modules, initialLessonId, initial
             disabled={!prevLesson || !canAccess(prevLesson)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <ChevronLeft className="w-4 h-4" /> Previous
+            <ChevronLeft className="w-4 h-4" /> {isFrench ? "Précédent" : "Previous"}
           </button>
           <button
             onClick={() => goToLesson(nextLesson)}
             disabled={!nextLesson || !canAccess(nextLesson)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 dark:bg-white text-sm font-semibold text-white dark:text-gray-900 hover:bg-brand-600 dark:hover:bg-brand-500 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Next lesson <ChevronRight className="w-4 h-4" />
+            {isFrench ? "Leçon suivante" : "Next lesson"} <ChevronRight className="w-4 h-4" />
           </button>
         </div>
 
         {/* Tabs */}
         <div className="flex overflow-x-auto border-b border-gray-200 dark:border-gray-800 mt-6 mb-6">
           {[
-            { id: 'overview', label: 'Overview', icon: BookOpen },
-            { id: 'qa', label: 'Q&A', icon: MessageSquare },
-            { id: 'notes', label: 'Notes', icon: StickyNote },
+            { id: 'overview', label: isFrench ? 'Aperçu' : 'Overview', icon: BookOpen },
+            { id: 'qa', label: isFrench ? 'Questions / Réponses' : 'Q&A', icon: MessageSquare },
+            { id: 'notes', label: isFrench ? 'Notes' : 'Notes', icon: StickyNote },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -303,14 +314,15 @@ export default function LessonClient({ course, modules, initialLessonId, initial
         </div>
 
         <div className="pb-10">
-          {activeTab === 'overview' && <OverviewTab lesson={activeLesson} course={course} />}
-          {activeTab === 'qa' && <QATab lessonId={String(activeLesson.id)} canPost={isEnrolled} />}
+          {activeTab === 'overview' && <OverviewTab lesson={activeLesson} course={course} isFrench={isFrench} />}
+          {activeTab === 'qa' && <QATab lessonId={String(activeLesson.id)} canPost={isEnrolled} isFrench={isFrench} />}
           {activeTab === 'notes' && (
             <NotesTab
               courseId={String(course.id)}
               lessonId={String(activeLesson.id)}
               getTime={() => playerRef.current?.getCurrentTime() || 0}
               seekTo={(t) => playerRef.current?.seekTo(t)}
+              isFrench={isFrench}
             />
           )}
         </div>
@@ -320,14 +332,20 @@ export default function LessonClient({ course, modules, initialLessonId, initial
       <div className="w-full xl:w-80 2xl:w-96 flex-shrink-0">
         <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm overflow-hidden sticky top-6">
           <div className="p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-            <h2 className="font-bold text-gray-900 dark:text-white text-lg">Course Content</h2>
+            <h2 className="font-bold text-gray-900 dark:text-white text-lg">
+              {isFrench ? "Contenu du cours" : "Course Content"}
+            </h2>
             <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">
-              {modules.length} sections · {allLessons.length} lessons
+              {isFrench
+                ? `${modules.length} modules · ${allLessons.length} leçons`
+                : `${modules.length} sections · ${allLessons.length} lessons`}
             </p>
             {isEnrolled && (
               <div className="mt-3">
                 <div className="flex justify-between text-xs font-medium mb-1.5">
-                  <span className="text-gray-600 dark:text-gray-300">{completedCount}/{allLessons.length} completed</span>
+                  <span className="text-gray-600 dark:text-gray-300">
+                    {completedCount}/{allLessons.length} {isFrench ? "terminées" : "completed"}
+                  </span>
                   <span className="text-brand-600 dark:text-brand-400">{overallPct}%</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
@@ -352,7 +370,7 @@ export default function LessonClient({ course, modules, initialLessonId, initial
                   >
                     <div className="min-w-0">
                       <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight">
-                        Section {idx + 1}: {module.title}
+                        {isFrench ? `Module ${idx + 1} : ${module.title}` : `Section ${idx + 1}: ${module.title}`}
                       </h3>
                       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         {doneInModule} / {lessons.length} · {minutes} min
@@ -390,7 +408,11 @@ export default function LessonClient({ course, modules, initialLessonId, initial
                               <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
                                 {getLessonVideo(lesson) ? <PlayCircle className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
                                 <span>{lesson.duration_minutes || 0} min</span>
-                                {!done && saved > 5 && <span className="text-brand-600 dark:text-brand-400">· at {formatTime(saved)}</span>}
+                                {!done && saved > 5 && (
+                                  <span className="text-brand-600 dark:text-brand-400">
+                                    · {isFrench ? "à" : "at"} {formatTime(saved)}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </button>
@@ -409,22 +431,28 @@ export default function LessonClient({ course, modules, initialLessonId, initial
 }
 
 /* ====================== Overview ====================== */
-function OverviewTab({ lesson, course }: { lesson: any; course: any }) {
+function OverviewTab({ lesson, course, isFrench }: { lesson: any; course: any; isFrench: boolean }) {
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-6 sm:p-8 border border-gray-200 dark:border-gray-800 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">About this lesson</h3>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+          {isFrench ? "À propos de cette leçon" : "About this lesson"}
+        </h3>
         {lesson.content ? (
           <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap text-sm md:text-base">{lesson.content}</div>
         ) : (
-          <p className="text-sm text-gray-500">No written content for this lesson.</p>
+          <p className="text-sm text-gray-500">
+            {isFrench ? "Aucun contenu écrit pour cette leçon." : "No written content for this lesson."}
+          </p>
         )}
       </div>
 
       <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-6 sm:p-8 border border-gray-200 dark:border-gray-800 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">About this course</h3>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">
+          {isFrench ? "À propos de cette formation" : "About this course"}
+        </h3>
         <p className="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap text-sm line-clamp-6">
-          {course.description || "No description available."}
+          {course.description || (isFrench ? "Aucune description disponible." : "No description available.")}
         </p>
         {course.instructor && (
           <div className="flex items-center gap-3 mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
@@ -449,7 +477,7 @@ function OverviewTab({ lesson, course }: { lesson: any; course: any }) {
 }
 
 /* ====================== Q&A (connected to /api/questions) ====================== */
-function QATab({ lessonId, canPost }: { lessonId: string; canPost: boolean }) {
+function QATab({ lessonId, canPost, isFrench }: { lessonId: string; canPost: boolean; isFrench: boolean }) {
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
@@ -478,7 +506,7 @@ function QATab({ lessonId, canPost }: { lessonId: string; canPost: boolean }) {
         method: "POST",
         body: JSON.stringify({ lesson: lessonId, title: title.trim(), body: body.trim() }),
       });
-      if (!res.ok) throw new Error("Could not post your question.");
+      if (!res.ok) throw new Error(isFrench ? "Impossible d'envoyer votre question." : "Could not post your question.");
       const q = await res.json();
       setQuestions((qs) => [{ ...q, answers: q.answers || [] }, ...qs]);
       setTitle("");
@@ -498,7 +526,7 @@ function QATab({ lessonId, canPost }: { lessonId: string; canPost: boolean }) {
             id="qa-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Question title"
+            placeholder={isFrench ? "Titre de votre question" : "Question title"}
             className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/40"
           />
           <textarea
@@ -506,7 +534,7 @@ function QATab({ lessonId, canPost }: { lessonId: string; canPost: boolean }) {
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={3}
-            placeholder="Describe your question in detail…"
+            placeholder={isFrench ? "Décrivez votre question en détail…" : "Describe your question in detail…"}
             className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/40 resize-none"
           />
           {error && <p className="text-xs text-red-500">{error}</p>}
@@ -516,7 +544,8 @@ function QATab({ lessonId, canPost }: { lessonId: string; canPost: boolean }) {
               disabled={posting || !title.trim() || !body.trim()}
               className="flex items-center gap-2 px-5 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold disabled:opacity-50"
             >
-              {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Ask question
+              {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {isFrench ? "Poser la question" : "Ask question"}
             </button>
           </div>
         </form>
@@ -527,7 +556,9 @@ function QATab({ lessonId, canPost }: { lessonId: string; canPost: boolean }) {
       ) : questions.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <MessageSquare className="w-10 h-10 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm">No questions for this lesson yet. Be the first to ask!</p>
+          <p className="text-sm">
+            {isFrench ? "Aucune question pour cette leçon. Soyez le premier à poser une question !" : "No questions for this lesson yet. Be the first to ask!"}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -539,7 +570,9 @@ function QATab({ lessonId, canPost }: { lessonId: string; canPost: boolean }) {
                   <p className="text-xs text-gray-500 mt-0.5">{q.student_name} · {new Date(q.created_at).toLocaleDateString()}</p>
                 </div>
                 {q.is_resolved && (
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Resolved</span>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    {isFrench ? "Résolu" : "Resolved"}
+                  </span>
                 )}
               </div>
               <p className="text-sm text-gray-700 dark:text-gray-300 mt-3 whitespace-pre-wrap">{q.body}</p>
@@ -550,7 +583,9 @@ function QATab({ lessonId, canPost }: { lessonId: string; canPost: boolean }) {
                       <p className="text-xs font-semibold text-gray-900 dark:text-white">
                         {a.author_name}
                         {a.author_role === "INSTRUCTOR" && (
-                          <span className="ml-2 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-500/10">Instructor</span>
+                          <span className="ml-2 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-500/10">
+                            {isFrench ? "Formateur" : "Instructor"}
+                          </span>
                         )}
                       </p>
                       <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">{a.body}</p>
@@ -569,8 +604,8 @@ function QATab({ lessonId, canPost }: { lessonId: string; canPost: boolean }) {
 /* ====================== Notes (timecoded, stored locally) ====================== */
 interface Note { id: string; lessonId: string; time: number; text: string; createdAt: number }
 
-function NotesTab({ courseId, lessonId, getTime, seekTo }: {
-  courseId: string; lessonId: string; getTime: () => number; seekTo: (t: number) => void;
+function NotesTab({ courseId, lessonId, getTime, seekTo, isFrench }: {
+  courseId: string; lessonId: string; getTime: () => number; seekTo: (t: number) => void; isFrench: boolean;
 }) {
   const storageKey = `lesson_notes_${courseId}`;
   const [notes, setNotes] = useState<Note[]>([]);
@@ -608,7 +643,7 @@ function NotesTab({ courseId, lessonId, getTime, seekTo }: {
       <form onSubmit={addNote} className="bg-white dark:bg-gray-800/50 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
         <div className="flex items-center gap-2 mb-3 text-sm text-gray-600 dark:text-gray-300">
           <Clock className="w-4 h-4 text-brand-500" />
-          Note at <span className="font-semibold tabular-nums">{formatTime(capturedTime ?? getTime())}</span>
+          {isFrench ? "Note à" : "Note at"} <span className="font-semibold tabular-nums">{formatTime(capturedTime ?? getTime())}</span>
         </div>
         <textarea
           id="note-text"
@@ -616,18 +651,20 @@ function NotesTab({ courseId, lessonId, getTime, seekTo }: {
           onFocus={() => capturedTime === null && setCapturedTime(getTime())}
           onChange={(e) => setText(e.target.value)}
           rows={3}
-          placeholder="Write a note for this moment in the video…"
+          placeholder={isFrench ? "Écrivez une note pour ce moment de la vidéo…" : "Write a note for this moment in the video…"}
           className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-transparent px-4 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/40 resize-none"
         />
         <div className="flex justify-end mt-3">
           <button type="submit" disabled={!text.trim()} className="px-5 py-2 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold disabled:opacity-50">
-            Save note
+            {isFrench ? "Enregistrer la note" : "Save note"}
           </button>
         </div>
       </form>
 
       {lessonNotes.length === 0 ? (
-        <p className="text-center text-sm text-gray-500 py-8">No notes for this lesson yet.</p>
+        <p className="text-center text-sm text-gray-500 py-8">
+          {isFrench ? "Aucune note pour cette leçon pour l'instant." : "No notes for this lesson yet."}
+        </p>
       ) : (
         <ul className="space-y-3">
           {lessonNotes.map((n) => (
@@ -635,7 +672,7 @@ function NotesTab({ courseId, lessonId, getTime, seekTo }: {
               <button
                 onClick={() => seekTo(n.time)}
                 className="px-2 py-1 rounded-md bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-400 text-xs font-bold tabular-nums hover:bg-brand-100"
-                title="Jump to this moment"
+                title={isFrench ? "Sauter à ce moment" : "Jump to this moment"}
               >
                 {formatTime(n.time)}
               </button>
@@ -643,7 +680,7 @@ function NotesTab({ courseId, lessonId, getTime, seekTo }: {
               <button
                 onClick={() => persist(notes.filter((x) => x.id !== n.id))}
                 className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity"
-                aria-label="Delete note"
+                aria-label={isFrench ? "Supprimer la note" : "Delete note"}
               >
                 <Trash2 className="w-4 h-4" />
               </button>

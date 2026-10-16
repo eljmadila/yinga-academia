@@ -6,6 +6,7 @@ import { SalesPerformanceChart, RevenueDistributionChart } from "@/components/in
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import { resolveApiUrl } from "@/lib/api";
 
 interface AnalyticsData {
@@ -36,6 +37,8 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsClient({ token }: { token: string | undefined }) {
+  const locale = useLocale();
+  const isFrench = locale === "fr";
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
@@ -117,16 +120,16 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
     // Simulate API delay
     setTimeout(() => {
       setIsRequestingPayout(false);
-      showToast("Payout request submitted successfully!", "success");
+      showToast(isFrench ? "Demande de virement envoyée avec succès !" : "Payout request submitted successfully!", "success");
     }, 1500);
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">Loading analytics...</div>;
+    return <div className="p-8 text-center text-gray-500">{isFrench ? "Chargement des statistiques..." : "Loading analytics..."}</div>;
   }
 
   if (!data) {
-    return <div className="p-8 text-center text-red-500">Failed to load analytics data.</div>;
+    return <div className="p-8 text-center text-red-500">{isFrench ? "Échec du chargement des statistiques." : "Failed to load analytics data."}</div>;
   }
 
   const { totalRevenue, totalStudents, coursePerformance, recentTransactions: allTransactions, monthlyHistory, monthlyRevenue } = data;
@@ -150,10 +153,12 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90 md:text-3xl">
-            Instructor analytics
+            {isFrench ? "Statistiques Formateur" : "Instructor analytics"}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Review course performance, learner activity, and revenue generated from your published courses.
+            {isFrench
+              ? "Consultez les performances de vos formations, l'activité des apprenants et les revenus générés."
+              : "Review course performance, learner activity, and revenue generated from your published courses."}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -162,16 +167,16 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
             onChange={(e) => setDateFilter(e.target.value as "all" | "7" | "30")}
             className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:border-gray-800 dark:bg-transparent dark:text-gray-300 dark:hover:bg-gray-800/50"
           >
-            <option value="all" className="dark:bg-gray-800">All time</option>
-            <option value="30" className="dark:bg-gray-800">Last 30 days</option>
-            <option value="7" className="dark:bg-gray-800">Last 7 days</option>
+            <option value="all" className="dark:bg-gray-800">{isFrench ? "Toute la période" : "All time"}</option>
+            <option value="30" className="dark:bg-gray-800">{isFrench ? "Les 30 derniers jours" : "Last 30 days"}</option>
+            <option value="7" className="dark:bg-gray-800">{isFrench ? "Les 7 derniers jours" : "Last 7 days"}</option>
           </select>
           <Link 
             href="/instructor/payouts"
             className="flex items-center gap-2 rounded-lg bg-brand-500 px-5 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-600 disabled:opacity-50"
           >
             <Wallet className="h-4 w-4" />
-            Request payout
+            {isFrench ? "Demander un virement" : "Request payout"}
           </Link>
         </div>
       </div>
@@ -185,7 +190,7 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">Available balance</p>
+            <p className="text-sm font-medium text-gray-500">{isFrench ? "Solde disponible" : "Available balance"}</p>
             <h4 className="mt-1 text-3xl font-bold text-gray-800 dark:text-white/90">€{(totalRevenue * 0.38).toFixed(2)}</h4>
           </div>
         </div>
@@ -200,8 +205,8 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
             </span>
           </div>
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">Total revenue</p>
-            <h4 className="mt-1 text-3xl font-bold text-gray-800 dark:text-white/90">€{totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h4>
+            <p className="text-sm font-medium text-gray-500">{isFrench ? "Revenus totaux" : "Total revenue"}</p>
+            <h4 className="mt-1 text-3xl font-bold text-gray-800 dark:text-white/90">€{totalRevenue.toLocaleString(isFrench ? "fr-FR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h4>
           </div>
         </div>
 
@@ -212,7 +217,7 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">Pending payouts</p>
+            <p className="text-sm font-medium text-gray-500">{isFrench ? "Virements en attente" : "Pending payouts"}</p>
             <h4 className="mt-1 text-3xl font-bold text-gray-800 dark:text-white/90">€{(totalRevenue * 0.08).toFixed(2)}</h4>
           </div>
         </div>
@@ -227,7 +232,7 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
             </span>
           </div>
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">Learners enrolled</p>
+            <p className="text-sm font-medium text-gray-500">{isFrench ? "Apprenants inscrits" : "Learners enrolled"}</p>
             <h4 className="mt-1 text-3xl font-bold text-gray-800 dark:text-white/90">{totalStudents}</h4>
           </div>
         </div>
@@ -242,7 +247,9 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
             <RevenueDistributionChart data={coursePerformance} />
           ) : (
             <div className="flex h-[350px] items-center justify-center rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
-              <p className="text-sm text-gray-500">No revenue data for charts yet.</p>
+              <p className="text-sm text-gray-500">
+                {isFrench ? "Aucune donnée de revenus pour les graphiques pour l'instant." : "No revenue data for charts yet."}
+              </p>
             </div>
           )}
         </div>
@@ -251,8 +258,14 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex items-center justify-between border-b border-gray-100 p-6 dark:border-gray-800">
           <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-white/90">Recent transactions</h3>
-            <p className="text-sm text-gray-500">Enrollment payments and course purchases from your students</p>
+            <h3 className="text-lg font-bold text-gray-800 dark:text-white/90">
+              {isFrench ? "Transactions récentes" : "Recent transactions"}
+            </h3>
+            <p className="text-sm text-gray-500">
+              {isFrench
+                ? "Paiements d'inscriptions et achats de cours de vos apprenants"
+                : "Enrollment payments and course purchases from your students"}
+            </p>
           </div>
           <button 
             onClick={handleExportPDF}
@@ -260,7 +273,7 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
             className="flex items-center gap-2 text-sm font-medium text-brand-500 transition-colors hover:text-brand-600 disabled:opacity-50"
           >
             <Download className="h-4 w-4" />
-            {isExporting ? "Exporting..." : "Export PDF"}
+            {isExporting ? (isFrench ? "Exportation..." : "Exporting...") : (isFrench ? "Exporter en PDF" : "Export PDF")}
           </button>
         </div>
 
@@ -268,12 +281,12 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
           <table className="w-full text-left text-sm text-gray-500 dark:text-gray-400">
             <thead className="bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
               <tr>
-                <th className="px-6 py-4 font-semibold">Transaction ID</th>
-                <th className="px-6 py-4 font-semibold">Student & course</th>
-                <th className="px-6 py-4 font-semibold">Amount</th>
-                <th className="px-6 py-4 font-semibold">Method</th>
-                <th className="px-6 py-4 font-semibold">Date</th>
-                <th className="px-6 py-4 text-right font-semibold">Status</th>
+                <th className="px-6 py-4 font-semibold">{isFrench ? "ID Transaction" : "Transaction ID"}</th>
+                <th className="px-6 py-4 font-semibold">{isFrench ? "Étudiant & formation" : "Student & course"}</th>
+                <th className="px-6 py-4 font-semibold">{isFrench ? "Montant" : "Amount"}</th>
+                <th className="px-6 py-4 font-semibold">{isFrench ? "Moyen de paiement" : "Method"}</th>
+                <th className="px-6 py-4 font-semibold">{isFrench ? "Date" : "Date"}</th>
+                <th className="px-6 py-4 text-right font-semibold">{isFrench ? "Statut" : "Status"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -295,7 +308,11 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
                           ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
                           : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
                     }`}>
-                      {trx.status}
+                      {trx.status === "Completed"
+                        ? (isFrench ? "Terminé" : "Completed")
+                        : trx.status === "Pending"
+                        ? (isFrench ? "En attente" : "Pending")
+                        : (isFrench ? "Échoué" : trx.status)}
                     </span>
                   </td>
                 </tr>
@@ -303,13 +320,15 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
             </tbody>
           </table>
           {filteredTransactions.length === 0 && (
-            <div className="p-8 text-center text-gray-500">No transactions found.</div>
+            <div className="p-8 text-center text-gray-500">
+              {isFrench ? "Aucune transaction trouvée." : "No transactions found."}
+            </div>
           )}
         </div>
         <div className="border-t border-gray-100 p-4 text-center dark:border-gray-800">
-          <button className="flex w-full items-center justify-center gap-1 text-sm font-medium text-brand-500 transition-colors hover:text-brand-600">
-            View full history <ArrowRight className="h-4 w-4" />
-          </button>
+          <Link href="/instructor/payouts" className="flex w-full items-center justify-center gap-1 text-sm font-medium text-brand-500 transition-colors hover:text-brand-600">
+            {isFrench ? "Voir tout l'historique des virements" : "View full history"} <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
 

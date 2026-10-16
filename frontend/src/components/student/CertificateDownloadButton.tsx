@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
+import { useLocale } from "next-intl";
 import { resolveApiUrl } from "@/lib/api";
 
 function getAccessToken() {
@@ -16,13 +17,19 @@ export default function CertificateDownloadButton({
   courseId: string;
   className: string;
 }) {
+  const locale = useLocale();
+  const isFrench = locale === "fr";
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");
 
   const handleDownload = async () => {
     const token = getAccessToken();
     if (!token) {
-      setError("Please sign in again to download your certificate.");
+      setError(
+        isFrench
+          ? "Veuillez vous reconnecter pour télécharger votre certificat."
+          : "Please sign in again to download your certificate."
+      );
       return;
     }
 
@@ -33,7 +40,7 @@ export default function CertificateDownloadButton({
         resolveApiUrl(`/enrollments/certificate/?course_id=${encodeURIComponent(courseId)}`),
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      if (!response.ok) throw new Error("Certificate download failed.");
+      if (!response.ok) throw new Error(isFrench ? "Échec du téléchargement du certificat." : "Certificate download failed.");
 
       const url = URL.createObjectURL(await response.blob());
       const link = document.createElement("a");
@@ -45,7 +52,11 @@ export default function CertificateDownloadButton({
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (downloadError) {
       console.error(downloadError);
-      setError("Unable to download the certificate. Please try again.");
+      setError(
+        isFrench
+          ? "Impossible de télécharger le certificat. Veuillez réessayer."
+          : "Unable to download the certificate. Please try again."
+      );
     } finally {
       setDownloading(false);
     }
@@ -60,7 +71,7 @@ export default function CertificateDownloadButton({
         className={`${className} disabled:cursor-wait disabled:opacity-60`}
       >
         {downloading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
-        Download PDF Certificate
+        {isFrench ? "Télécharger le certificat PDF" : "Download PDF Certificate"}
       </button>
       {error && <p role="alert" className="text-sm text-red-600 dark:text-red-400">{error}</p>}
     </div>
