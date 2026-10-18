@@ -188,6 +188,7 @@ export default function PublicCatalogPage() {
               const instructorName =
                 course.instructor_name ||
                 (course.instructor ? `${course.instructor.first_name || ""} ${course.instructor.last_name || ""}`.trim() : "") ||
+                (course.instructor?.email ? course.instructor.email.split("@")[0] : "") ||
                 (isFrench ? "Formateur certifié" : "Certified Instructor");
 
               return (

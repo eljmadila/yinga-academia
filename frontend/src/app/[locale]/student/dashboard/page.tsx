@@ -152,19 +152,27 @@ export default async function StudentDashboard({
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {inProgressEnrollments.slice(0, 4).map((enrollment) => (
-                  <div key={enrollment.id} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] transition-shadow hover:shadow-lg">
-                    <img 
-                      src={enrollment.course_details.thumbnail || "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=500&q=80"} 
-                      alt={enrollment.course_details.title} 
-                      className="h-40 w-full rounded-xl object-cover mb-4" 
-                    />
-                    <h3 className="font-semibold text-gray-800 dark:text-white/90 mb-1 line-clamp-1" title={enrollment.course_details.title}>
-                      {enrollment.course_details.title}
-                    </h3>
-                    <p className="text-xs text-gray-500 mb-4">
-                      {enrollment.course_details.instructor_name || t("bySarah")}
-                    </p>
+                {inProgressEnrollments.slice(0, 4).map((enrollment) => {
+                  const inst = enrollment.course_details?.instructor;
+                  const instName =
+                    enrollment.course_details?.instructor_name ||
+                    (inst && typeof inst === "object" ? `${inst.first_name || ""} ${inst.last_name || ""}`.trim() : "") ||
+                    (inst?.email ? inst.email.split("@")[0] : "") ||
+                    (isFrench ? "Instructeur" : "Instructor");
+
+                  return (
+                    <div key={enrollment.id} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] transition-shadow hover:shadow-lg">
+                      <img 
+                        src={enrollment.course_details.thumbnail || "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=500&q=80"} 
+                        alt={enrollment.course_details.title} 
+                        className="h-40 w-full rounded-xl object-cover mb-4" 
+                      />
+                      <h3 className="font-semibold text-gray-800 dark:text-white/90 mb-1 line-clamp-1" title={enrollment.course_details.title}>
+                        {enrollment.course_details.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 mb-4">
+                        {isFrench ? "Par" : "By"} {instName}
+                      </p>
                     
                     <div className="space-y-2">
                       <div className="flex justify-between text-xs font-medium">
@@ -176,7 +184,8 @@ export default async function StudentDashboard({
                       </div>
                     </div>
                   </div>
-                ))}
+                );
+              })}
               </div>
             </div>
           )}

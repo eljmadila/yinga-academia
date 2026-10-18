@@ -76,6 +76,12 @@ export default async function MyCoursesPage({
                 {enrollments.map((enrollment) => {
                   const lessonId = enrollment.course_details.modules?.[0]?.lessons?.[0]?.id || enrollment.course_details.lessons?.[0]?.id || 1;
                   const isCompleted = enrollment.progress_percentage === 100;
+                  const inst = enrollment.course_details?.instructor;
+                  const instName =
+                    enrollment.course_details?.instructor_name ||
+                    (inst && typeof inst === "object" ? `${inst.first_name || ""} ${inst.last_name || ""}`.trim() : "") ||
+                    (inst?.email ? inst.email.split("@")[0] : "") ||
+                    (isFrench ? "Instructeur" : "Instructor");
                   
                   return (
                     <tr key={enrollment.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors group">
@@ -97,7 +103,7 @@ export default async function MyCoursesPage({
                               {enrollment.course_details.title}
                             </h3>
                             <p className="text-xs text-gray-500 line-clamp-1">
-                              {isFrench ? "Par" : "By"} {enrollment.course_details.instructor_name || (isFrench ? "Instructeur" : "Instructor")}
+                              {isFrench ? "Par" : "By"} {instName}
                             </p>
                           </div>
                         </div>

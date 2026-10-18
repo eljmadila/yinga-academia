@@ -86,7 +86,11 @@ export default async function CourseOverviewPage({
   const nextLesson = allLessons.find((l) => !completedLessonIds.has(String(l.id))) || allLessons[0];
 
   const instructor = course.instructor || {};
-  const instructorName = `${instructor.first_name || ""} ${instructor.last_name || ""}`.trim() || (isFrench ? "Formateur" : "Instructor");
+  const instructorName =
+    course.instructor_name ||
+    `${instructor.first_name || ""} ${instructor.last_name || ""}`.trim() ||
+    (instructor.email ? instructor.email.split("@")[0] : "") ||
+    (isFrench ? "Formateur" : "Instructor");
   const objectives: string[] = Array.isArray(course.learning_objectives) ? course.learning_objectives.filter(Boolean) : [];
   const includes: string[] = Array.from(new Set([
     "CERTIFICATE",

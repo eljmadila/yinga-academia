@@ -100,6 +100,7 @@ class InstructorSerializer(serializers.ModelSerializer):
 
 class CourseSerializer(serializers.ModelSerializer):
     instructor = InstructorSerializer(read_only=True)
+    instructor_name = serializers.SerializerMethodField()
     modules = ModuleSerializer(many=True, required=False)
     lessons = LessonSerializer(many=True, required=False, read_only=True)
     enrollments_count = serializers.SerializerMethodField()
@@ -111,8 +112,8 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ('id', 'instructor', 'title', 'description', 'price', 'category', 'level', 'learning_objectives', 'course_includes', 'thumbnail', 'trailer_url', 'status', 'is_published', 'modules', 'lessons', 'enrollments_count', 'total_revenue', 'is_favorite', 'is_enrolled', 'average_rating', 'reviews_count', 'created_at', 'updated_at')
-        read_only_fields = ('id', 'instructor', 'created_at', 'updated_at')
+        fields = ('id', 'instructor', 'instructor_name', 'title', 'description', 'price', 'category', 'level', 'learning_objectives', 'course_includes', 'thumbnail', 'trailer_url', 'status', 'is_published', 'modules', 'lessons', 'enrollments_count', 'total_revenue', 'is_favorite', 'is_enrolled', 'average_rating', 'reviews_count', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'instructor', 'instructor_name', 'created_at', 'updated_at')
 
     def validate_thumbnail(self, value):
         if value and value.size > settings.MAX_COURSE_THUMBNAIL_BYTES:
@@ -124,6 +125,15 @@ class CourseSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError('Course thumbnail dimensions must not exceed 4096 pixels.')
             value.seek(0)
         return value
+
+    def get_instructor_name(self, obj):
+        if obj.instructor:
+            name = f"{obj.instructor.first_name or ''} {obj.instructor.last_name or ''}".strip()
+            if name:
+                return name
+            if obj.instructor.email:
+                return obj.instructor.email.split('@')[0]
+        return "Instructor"
 
     def get_is_enrolled(self, obj):
         request = self.context.get('request')

@@ -478,12 +478,12 @@ function OverviewTab({ lesson, course, isFrench }: { lesson: any; course: any; i
               <img src={course.instructor.avatar} alt="" className="w-11 h-11 rounded-full object-cover" />
             ) : (
               <div className="w-11 h-11 rounded-full bg-brand-100 dark:bg-brand-500/20 text-brand-600 flex items-center justify-center font-bold">
-                {(course.instructor.first_name || "I").charAt(0)}
+                {(course.instructor_name || course.instructor.first_name || "I").charAt(0).toUpperCase()}
               </div>
             )}
             <div>
               <p className="font-semibold text-sm text-gray-900 dark:text-white">
-                {course.instructor.first_name} {course.instructor.last_name}
+                {course.instructor_name || `${course.instructor.first_name || ""} ${course.instructor.last_name || ""}`.trim() || (course.instructor.email ? course.instructor.email.split("@")[0] : "") || (isFrench ? "Formateur" : "Instructor")}
               </p>
               {course.instructor.title && <p className="text-xs text-gray-500">{course.instructor.title}</p>}
             </div>

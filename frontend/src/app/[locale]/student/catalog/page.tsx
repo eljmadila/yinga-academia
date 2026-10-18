@@ -262,10 +262,13 @@ export default function StudentCatalogPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {filteredCourses.map((course) => {
+            const instructorName =
+              course.instructor_name ||
+              (typeof course.instructor === 'object' && course.instructor !== null
+                ? `${course.instructor.first_name || ""} ${course.instructor.last_name || ""}`.trim() || (course.instructor.email ? course.instructor.email.split("@")[0] : "")
+                : (typeof course.instructor === 'string' ? course.instructor : "")) ||
+              (isFrench ? "Instructeur" : "Instructor");
             const price = Number(course.price) || 0;
-            const instructorName = typeof course.instructor === 'object' && course.instructor !== null
-              ? `${course.instructor.first_name || ""} ${course.instructor.last_name || ""}`.trim()
-              : (course.instructor_name || course.instructor || (isFrench ? "Instructeur" : "Instructor"));
 
             return (
               <div key={course.id} className="group flex flex-col md:flex-row overflow-hidden rounded-xl border border-gray-200 bg-white transition-all hover:shadow-lg hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900/40 dark:hover:border-gray-700">
