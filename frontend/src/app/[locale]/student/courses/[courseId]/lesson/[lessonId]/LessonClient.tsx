@@ -58,11 +58,20 @@ const resolveMediaUrl = (u?: string | null) => {
   return `${BACKEND_ORIGIN}${u.startsWith("/") ? "" : "/"}${u}`;
 };
 
-const getLessonVideo = (lesson: any) =>
-  resolveMediaUrl(lesson?.video_file) ||
-  resolveMediaUrl(lesson?.video_url) ||
-  resolveMediaUrl(lesson?.video_media?.[0]?.video_url) ||
-  null;
+const getLessonVideo = (lesson: any, token?: string) => {
+  const raw =
+    resolveMediaUrl(lesson?.video_file) ||
+    resolveMediaUrl(lesson?.video_url) ||
+    resolveMediaUrl(lesson?.video_media?.[0]?.video_url) ||
+    null;
+  if (!raw) return null;
+  // If it's a backend /media/ URL and we have an auth token, attach ?token= for HTML5 <video> authentication
+  if (token && raw.includes("/media/videos/") && !raw.includes("?token=") && !raw.includes("&token=")) {
+    const separator = raw.includes("?") ? "&" : "?";
+    return `${raw}${separator}token=${encodeURIComponent(token)}`;
+  }
+  return raw;
+};
 
 export default function LessonClient({ course, modules, initialLessonId, initialProgress, isEnrolled }: LessonClientProps) {
   const locale = useLocale();
@@ -193,7 +202,8 @@ export default function LessonClient({ course, modules, initialLessonId, initial
     if (nextLesson && canAccess(nextLesson)) setNextCountdown(NEXT_COUNTDOWN_SEC);
   };
 
-  const videoSrc = getLessonVideo(activeLesson);
+  const token = getCookieValue("access_token");
+  const videoSrc = getLessonVideo(activeLesson, token);
   const startAt = progress[String(activeLesson?.id)]?.current_timecode || 0;
 
   if (!activeLesson) {
@@ -414,7 +424,7 @@ export default function LessonClient({ course, modules, initialLessonId, initial
                                 {lessonIdx + 1}. {lesson.title}
                               </p>
                               <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
-                                {getLessonVideo(lesson) ? <PlayCircle className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
+                                {getLessonVideo(lesson, token) ? <PlayCircle className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
                                 <span>{lesson.duration_minutes || 0} min</span>
                                 {!done && saved > 5 && (
                                   <span className="text-brand-600 dark:text-brand-400">

@@ -17,6 +17,9 @@ from django.db.models import Q, Sum, Count
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from datetime import timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ChunkedVideoUploadView(APIView):
@@ -104,16 +107,34 @@ class ChunkedVideoUploadView(APIView):
             except OSError:
                 pass # Directory might not be empty if something went wrong
 
-            file_url = settings.MEDIA_URL + final_rel_path
+            # If Cloudinary is configured, upload to Cloudinary for permanent storage and CDN streaming
+            cloudinary_url = None
+            if getattr(settings, 'CLOUDINARY_CLOUD_NAME', None) and getattr(settings, 'CLOUDINARY_API_KEY', None) and getattr(settings, 'CLOUDINARY_API_SECRET', None):
+                try:
+                    import cloudinary.uploader
+                    c_resp = cloudinary.uploader.upload_large(
+                        final_path,
+                        resource_type="video",
+                        folder="courses/videos",
+                        public_id=f"{upload_id}_{Path(safe_filename).stem}",
+                        overwrite=True
+                    )
+                    cloudinary_url = c_resp.get('secure_url')
+                except Exception as c_err:
+                    logger.warning(f"Cloudinary upload failed, falling back to local storage: {c_err}")
+
+            file_url = cloudinary_url or (settings.MEDIA_URL + final_rel_path)
             
             video_media = None
             if lesson:
                 video_media = VideoMedia.objects.create(
                     lesson=lesson,
                     title=safe_filename,
-                    video_file=final_rel_path,
+                    video_file=final_rel_path if not cloudinary_url else '',
                     video_url=file_url
                 )
+                lesson.video_url = file_url
+                lesson.save(update_fields=['video_url'])
 
             return Response({
                 'message': 'Upload complete',
@@ -181,8 +202,10 @@ class CourseViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 print("Error parsing modules_json:", e)
 
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=201, headers=headers)
+        serializer.instance.refresh_from_db()
+        response_serializer = self.get_serializer(serializer.instance)
+        headers = self.get_success_headers(response_serializer.data)
+        return Response(response_serializer.data, status=201, headers=headers)
 
     def perform_create(self, serializer):
         serializer.save(instructor=self.request.user)

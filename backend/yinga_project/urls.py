@@ -37,8 +37,7 @@ from django.conf import settings
 from django.urls import re_path
 from apps.courses.media_views import serve_media_with_range
 
-if settings.DEBUG:
-    # Range-aware media serving (needed for video seeking / resume playback)
-    urlpatterns += [
-        re_path(r'^media/(?P<path>.*)$', serve_media_with_range, name='media'),
-    ]
+# Range-aware media serving (needed for video seeking / resume playback, protected by _can_access_video)
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve_media_with_range, name='media'),
+]

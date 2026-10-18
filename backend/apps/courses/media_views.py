@@ -21,16 +21,37 @@ def _can_access_video(request, path):
 
     from apps.courses.models import Lesson, VideoMedia
     from apps.students.models import Enrollment
+    from django.db.models import Q
 
-    video = VideoMedia.objects.filter(video_file=path).select_related('lesson__course').first()
-    lesson = video.lesson if video else Lesson.objects.filter(video_file=path).select_related('course').first()
+    video = VideoMedia.objects.filter(Q(video_file=path) | Q(video_file__endswith=path)).select_related('lesson__course').first()
+    lesson = video.lesson if video else Lesson.objects.filter(Q(video_file=path) | Q(video_file__endswith=path)).select_related('course').first()
     if not lesson:
         return False
     if lesson.is_free_preview:
         return True
 
-    user = request.user
-    if not user.is_authenticated:
+    user = getattr(request, 'user', None)
+    if not (user and user.is_authenticated):
+        token_str = None
+        auth_header = request.headers.get('Authorization') or request.META.get('HTTP_AUTHORIZATION')
+        if auth_header and auth_header.startswith('Bearer '):
+            token_str = auth_header.split(' ')[1].strip()
+        elif request.GET.get('token'):
+            token_str = request.GET.get('token').strip()
+        elif request.COOKIES.get('access_token'):
+            token_str = request.COOKIES.get('access_token').strip()
+
+        if token_str:
+            try:
+                from rest_framework_simplejwt.tokens import AccessToken
+                from apps.accounts.models import User
+                validated_token = AccessToken(token_str)
+                user_id = validated_token['user_id']
+                user = User.objects.get(id=user_id)
+            except Exception:
+                user = None
+
+    if not user or not user.is_authenticated:
         return False
     if user.is_staff or (user.role == 'INSTRUCTOR' and lesson.course.instructor_id == user.id):
         return True

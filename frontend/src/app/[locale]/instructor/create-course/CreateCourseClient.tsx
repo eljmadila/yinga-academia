@@ -137,6 +137,36 @@ export default function CreateCourseClient({ token }: { token: string | undefine
     return isFrench ? "Échec de l'enregistrement de la formation" : "Failed to save course";
   };
 
+  const uploadLessonVideo = async (file: File, lessonId: string) => {
+    const chunkSize = 5 * 1024 * 1024;
+    const totalChunks = Math.ceil(file.size / chunkSize);
+    const uploadId = crypto.randomUUID();
+
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * chunkSize;
+      const end = Math.min(start + chunkSize, file.size);
+      const chunk = file.slice(start, end);
+
+      const formData = new FormData();
+      formData.append("file", chunk);
+      formData.append("upload_id", uploadId);
+      formData.append("chunk_index", i.toString());
+      formData.append("total_chunks", totalChunks.toString());
+      formData.append("filename", file.name);
+      formData.append("lesson_id", lessonId);
+
+      const chunkRes = await fetch(resolveApiUrl('/courses/upload/chunked/'), {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!chunkRes.ok) {
+        console.warn(`Chunk ${i} upload failed for lesson ${lessonId}`);
+        break;
+      }
+    }
+  };
+
   const submitCourse = async (isDraft: boolean) => {
     if (!formData.title.trim()) {
       setCurrentStep(1);
@@ -162,8 +192,6 @@ export default function CreateCourseClient({ token }: { token: string | undefine
         payload.append("thumbnail", selectedFile);
       }
       
-      // Pass curriculum data to backend. Note: Actual nested file uploads for videos
-      // require a chunked upload approach on the backend. Here we pass the text metadata.
       const modulesPayload = modules.map(m => ({
         title: m.title,
         lessons: m.lessons.map(l => ({ title: l.title }))
@@ -180,6 +208,36 @@ export default function CreateCourseClient({ token }: { token: string | undefine
       });
 
       if (res.ok) {
+        const createdCourse = await res.json().catch(() => null);
+
+        // Upload any attached lesson video files
+        if (createdCourse?.modules && Array.isArray(createdCourse.modules)) {
+          const filesToUpload: { file: File; lessonId: string }[] = [];
+          createdCourse.modules.forEach((mod: any, mIdx: number) => {
+            const clientMod = modules[mIdx];
+            if (clientMod?.lessons && mod.lessons) {
+              mod.lessons.forEach((l: any, lIdx: number) => {
+                const clientLesson = clientMod.lessons[lIdx];
+                if (clientLesson?.file) {
+                  filesToUpload.push({ file: clientLesson.file, lessonId: String(l.id) });
+                }
+              });
+            }
+          });
+
+          if (filesToUpload.length > 0) {
+            showToast(
+              isFrench
+                ? "Envoi des vidéos de cours..."
+                : "Uploading lesson videos...",
+              "success"
+            );
+            for (const item of filesToUpload) {
+              await uploadLessonVideo(item.file, item.lessonId);
+            }
+          }
+        }
+
         showToast(
           isFrench
             ? `Formation ${isDraft ? "enregistrée en brouillon" : "créée"} avec succès !`
@@ -189,7 +247,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
         setTimeout(() => {
           router.push("/instructor/my-courses");
           router.refresh();
-        }, 1000);
+        }, 1200);
       } else {
         showToast(await parseError(res), "error");
       }
