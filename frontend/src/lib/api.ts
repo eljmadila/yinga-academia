@@ -44,8 +44,10 @@ export function getClientAccessToken(): string {
 export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
   const url = endpoint.startsWith("http") ? endpoint : resolveApiUrl(endpoint);
 
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+
   let headers: HeadersInit = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...options.headers,
   };
 

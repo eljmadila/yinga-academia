@@ -24,9 +24,10 @@ interface ModuleType {
   lessons: LessonType[];
 }
 
-const SortableLesson = ({ lesson, modIdx, handleUpdateLessonTitle, handleDeleteLesson, activeLessonUpload, setActiveLessonUpload, pendingUploadFile, t }: any) => {
+const SortableLesson = ({ lesson, modIdx, handleUpdateLessonTitle, handleDeleteLesson, activeLessonUpload, setActiveLessonUpload, pendingUploadFile, onLessonVideoUploaded, t, isFrench }: any) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: `lesson-${lesson.id}` });
   const style = { transform: CSS.Transform.toString(transform), transition };
+  const hasVideo = Boolean(lesson.video_url || lesson.video_file || (lesson.video_media && lesson.video_media.length > 0));
   
   return (
     <div ref={setNodeRef} style={style} className="flex flex-col rounded-lg bg-white p-4 border border-gray-100 dark:bg-gray-900 dark:border-gray-800 space-y-4">
@@ -35,18 +36,28 @@ const SortableLesson = ({ lesson, modIdx, handleUpdateLessonTitle, handleDeleteL
           <button {...attributes} {...listeners} className="cursor-grab text-gray-400 hover:text-gray-600"><GripVertical className="h-4 w-4" /></button>
           <input 
             type="text" 
-            value={lesson.title}
+            value={lesson.title} 
             onChange={(e) => handleUpdateLessonTitle(lesson.id, modIdx, e.target.value, false)}
             onBlur={(e) => handleUpdateLessonTitle(lesson.id, modIdx, e.target.value, true)}
             className="text-sm font-medium text-gray-700 dark:text-gray-300 bg-transparent outline-none w-full focus:border-b focus:border-brand-500" 
           />
         </div>
         <div className="flex items-center gap-3">
+          {hasVideo ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+              <CheckCircle2 className="h-3 w-3" />
+              {isFrench ? "Vidéo prête" : "Video attached"}
+            </span>
+          ) : (
+            <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+              {isFrench ? "Pas de vidéo" : "No video"}
+            </span>
+          )}
           <button 
             onClick={() => setActiveLessonUpload(activeLessonUpload === lesson.id ? null : lesson.id)} 
             className="text-brand-500 hover:text-brand-600 text-xs font-semibold"
           >
-            Video
+            {hasVideo ? (isFrench ? "Changer vidéo" : "Change video") : (isFrench ? "+ Ajouter vidéo" : "+ Add video")}
           </button>
           <button onClick={() => handleDeleteLesson(lesson.id, modIdx)} className="text-gray-400 hover:text-red-500"><Trash2 className="h-4 w-4" /></button>
         </div>
@@ -59,7 +70,10 @@ const SortableLesson = ({ lesson, modIdx, handleUpdateLessonTitle, handleDeleteL
             lessonId={lesson.id} 
             initialFile={pendingUploadFile}
             onUploadSuccess={(data) => {
-              toast.success(t("uploadComplete") + ": " + data.file_url);
+              toast.success(t("uploadComplete") + ": " + (data.file_url || ""));
+              if (onLessonVideoUploaded) {
+                onLessonVideoUploaded(lesson.id, modIdx, data.file_url);
+              }
               setActiveLessonUpload(null);
             }} 
           />
@@ -69,7 +83,7 @@ const SortableLesson = ({ lesson, modIdx, handleUpdateLessonTitle, handleDeleteL
   );
 };
 
-const SortableModule = ({ mod, modIdx, handleUpdateModuleTitle, handleDeleteModule, handleAddLessonClick, handleUpdateLessonTitle, handleDeleteLesson, activeLessonUpload, setActiveLessonUpload, pendingUploadFile, t }: any) => {
+const SortableModule = ({ mod, modIdx, handleUpdateModuleTitle, handleDeleteModule, handleAddLessonClick, handleUpdateLessonTitle, handleDeleteLesson, activeLessonUpload, setActiveLessonUpload, pendingUploadFile, onLessonVideoUploaded, t, isFrench }: any) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: `mod-${mod.id}` });
   const style = { transform: CSS.Transform.toString(transform), transition };
   
@@ -101,7 +115,9 @@ const SortableModule = ({ mod, modIdx, handleUpdateModuleTitle, handleDeleteModu
               activeLessonUpload={activeLessonUpload} 
               setActiveLessonUpload={setActiveLessonUpload} 
               pendingUploadFile={activeLessonUpload === lesson.id ? pendingUploadFile : null}
+              onLessonVideoUploaded={onLessonVideoUploaded}
               t={t} 
+              isFrench={isFrench}
             />
           ))}
         </SortableContext>
@@ -155,16 +171,22 @@ export default function CourseEditor({ courseIdProp }: { courseIdProp?: string |
             setDescription(data.description);
             if (data.thumbnail) setThumbnailPreview(data.thumbnail);
           }
-          if (currentStep === 2 && data.modules) {
+          if (data.modules && Array.isArray(data.modules)) {
             setModules(data.modules);
           }
         })
         .catch(err => {
           console.error(err);
-          // Optionally reset courseId if not found
         });
     }
-  }, [courseId, currentStep]);
+  }, [courseId]);
+
+  const handleLessonVideoUploaded = (lessonId: string, modIdx: number, videoUrl: string) => {
+    setModules(prevMods => prevMods.map((m, mI) => mI === modIdx ? {
+      ...m,
+      lessons: (m.lessons || []).map((l: any) => l.id === lessonId ? { ...l, video_url: videoUrl, video_media: [{ video_url: videoUrl }] } : l)
+    } : m));
+  };
 
   const isFrench = locale === "fr";
 
@@ -591,7 +613,9 @@ export default function CourseEditor({ courseIdProp }: { courseIdProp?: string |
                       activeLessonUpload={activeLessonUpload}
                       setActiveLessonUpload={setActiveLessonUpload}
                       pendingUploadFile={pendingUploadFile}
+                      onLessonVideoUploaded={handleLessonVideoUploaded}
                       t={t}
+                      isFrench={isFrench}
                     />
                   ))}
                 </SortableContext>
