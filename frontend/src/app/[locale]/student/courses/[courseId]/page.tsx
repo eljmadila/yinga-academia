@@ -131,10 +131,6 @@ export default async function CourseOverviewPage({
               src={resolveMediaUrl(course.thumbnail)} 
               alt={course.title} 
               className="w-full h-full object-cover absolute inset-0"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&q=80";
-              }}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-800">
