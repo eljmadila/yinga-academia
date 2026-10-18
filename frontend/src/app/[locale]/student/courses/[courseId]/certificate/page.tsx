@@ -5,11 +5,12 @@ import { notFound } from 'next/navigation';
 import { Award, ArrowLeft, CheckCircle2, BookOpen } from 'lucide-react';
 import CertificateDownloadButton from '@/components/student/CertificateDownloadButton';
 
-const API_URL =
+const API_URL = (
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NODE_ENV === "production"
     ? "https://yinga-backend.onrender.com/api"
-    : "http://localhost:8000/api");
+    : "http://localhost:8000/api")
+).trim().replace(/\/+$/, "");
 
 export default async function CourseCertificatePage({
   params,

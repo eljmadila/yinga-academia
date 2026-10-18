@@ -5,11 +5,12 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { Loader2, ShoppingCart, ShieldCheck } from "lucide-react";
 
-const API_URL =
+const API_URL = (
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NODE_ENV === "production"
     ? "https://yinga-backend.onrender.com/api"
-    : "http://localhost:8000/api");
+    : "http://localhost:8000/api")
+).trim().replace(/\/+$/, "");
 
 function getCookieValue(name: string) {
   if (typeof document === "undefined") return null;

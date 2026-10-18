@@ -5,11 +5,12 @@ import { cookies } from "next/headers";
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 
-const API_URL =
+const API_URL = (
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NODE_ENV === "production"
     ? "https://yinga-backend.onrender.com/api"
-    : "http://localhost:8000/api");
+    : "http://localhost:8000/api")
+).trim().replace(/\/+$/, "");
 
 async function getJson(url: string, token?: string) {
   try {
@@ -17,6 +18,10 @@ async function getJson(url: string, token?: string) {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       cache: "no-store",
     });
+    if (res.status === 401 && token) {
+      const publicRes = await fetch(url, { cache: "no-store" });
+      return publicRes.ok ? await publicRes.json() : null;
+    }
     return res.ok ? await res.json() : null;
   } catch (err) {
     console.error(`Failed to fetch ${url}`, err);
