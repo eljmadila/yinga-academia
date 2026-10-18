@@ -24,7 +24,7 @@ import { useLocale } from "next-intl";
 
 const revenueConfig = {
   revenue: {
-    label: "Revenus (€)",
+    label: "Revenus (KES)",
     color: "#3b82f6",
   },
 } satisfies ChartConfig;

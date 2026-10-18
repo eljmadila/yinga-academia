@@ -116,7 +116,7 @@ export default async function InstructorDashboard({
         <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
           <div className="flex items-center justify-between">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400">
-              <span className="text-xl font-bold">€</span>
+              <span className="text-sm font-bold tracking-tight">KES</span>
             </div>
             {monthlyRevenue > 0 && (
               <span className="flex items-center gap-1 text-sm font-medium text-green-500">
@@ -125,9 +125,9 @@ export default async function InstructorDashboard({
             )}
           </div>
           <div className="mt-4">
-            <h4 className="text-3xl font-bold text-gray-800 dark:text-white/90">€{totalRevenue.toFixed(2)}</h4>
+            <h4 className="text-3xl font-bold text-gray-800 dark:text-white/90">KES {totalRevenue.toFixed(2)}</h4>
             <p className="text-sm font-medium text-gray-500 mt-1">
-              {t("monthlyRevenue")} ({isFrench ? `${monthlyRevenue.toFixed(2)} € ce mois` : `€${monthlyRevenue.toFixed(2)} this month`})
+              {t("monthlyRevenue")} ({isFrench ? `${monthlyRevenue.toFixed(2)} KES ce mois` : `KES ${monthlyRevenue.toFixed(2)} this month`})
             </p>
           </div>
         </div>

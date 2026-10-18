@@ -307,7 +307,7 @@ export default function CourseTable({ initialCourses, token }: CourseTableProps)
 
                     <td className="px-6 py-4">
                       <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {Number(course.price) > 0 ? `$${course.price}` : (isFrench ? "Gratuit" : "Free")}
+                        {Number(course.price) > 0 ? `KES ${course.price}` : (isFrench ? "Gratuit" : "Free")}
                       </span>
                     </td>
 

@@ -93,7 +93,7 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
         t.id,
         t.student,
         t.course,
-        `€${t.amount.toFixed(2)}`,
+        `KES ${t.amount.toFixed(2)}`,
         t.method,
         t.date,
         t.status
@@ -191,7 +191,7 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
           </div>
           <div className="mt-4">
             <p className="text-sm font-medium text-gray-500">{isFrench ? "Solde disponible" : "Available balance"}</p>
-            <h4 className="mt-1 text-3xl font-bold text-gray-800 dark:text-white/90">€{(totalRevenue * 0.38).toFixed(2)}</h4>
+            <h4 className="mt-1 text-3xl font-bold text-gray-800 dark:text-white/90">KES {(totalRevenue * 0.38).toLocaleString(isFrench ? "fr-FR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h4>
           </div>
         </div>
 
@@ -206,7 +206,7 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
           </div>
           <div className="mt-4">
             <p className="text-sm font-medium text-gray-500">{isFrench ? "Revenus totaux" : "Total revenue"}</p>
-            <h4 className="mt-1 text-3xl font-bold text-gray-800 dark:text-white/90">€{totalRevenue.toLocaleString(isFrench ? "fr-FR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h4>
+            <h4 className="mt-1 text-3xl font-bold text-gray-800 dark:text-white/90">KES {totalRevenue.toLocaleString(isFrench ? "fr-FR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h4>
           </div>
         </div>
 
@@ -218,7 +218,7 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
           </div>
           <div className="mt-4">
             <p className="text-sm font-medium text-gray-500">{isFrench ? "Virements en attente" : "Pending payouts"}</p>
-            <h4 className="mt-1 text-3xl font-bold text-gray-800 dark:text-white/90">€{(totalRevenue * 0.08).toFixed(2)}</h4>
+            <h4 className="mt-1 text-3xl font-bold text-gray-800 dark:text-white/90">KES {(totalRevenue * 0.08).toLocaleString(isFrench ? "fr-FR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h4>
           </div>
         </div>
 
@@ -297,7 +297,7 @@ export default function AnalyticsClient({ token }: { token: string | undefined }
                     <div className="font-medium text-gray-800 dark:text-white/90">{trx.student}</div>
                     <div className="text-xs text-gray-500">{trx.course}</div>
                   </td>
-                  <td className="px-6 py-4 font-semibold text-gray-800 dark:text-white/90">€{trx.amount.toFixed(2)}</td>
+                  <td className="px-6 py-4 font-semibold text-gray-800 dark:text-white/90">KES {trx.amount.toFixed(2)}</td>
                   <td className="px-6 py-4">{trx.method}</td>
                   <td className="px-6 py-4">{trx.date}</td>
                   <td className="px-6 py-4 text-right">

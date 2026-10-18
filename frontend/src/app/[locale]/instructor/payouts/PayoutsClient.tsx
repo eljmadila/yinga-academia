@@ -33,8 +33,8 @@ export default function PayoutsClient({ token }: { token: string | undefined }) 
       id: "payouts",
       question: isFrench ? "Comprendre les virements" : "Understanding Payouts",
       answer: isFrench
-        ? "Les virements sont traités automatiquement le 1er de chaque mois pour les gains du mois précédent. Un solde minimum de 50 € est requis pour être éligible."
-        : "Payouts are processed automatically on the 1st of every month for the earnings from the previous month. You need a minimum balance of €50 to be eligible."
+        ? "Les virements sont traités automatiquement le 1er de chaque mois pour les gains du mois précédent. Un solde minimum de 500 KES est requis pour être éligible."
+        : "Payouts are processed automatically on the 1st of every month for the earnings from the previous month. You need a minimum balance of KES 500 to be eligible."
     },
     {
       id: "tax",
@@ -139,7 +139,7 @@ export default function PayoutsClient({ token }: { token: string | undefined }) 
       const pdfData = payouts.map(p => [
         new Date(p.created_at).toLocaleDateString(isFrench ? "fr-FR" : "en-US"),
         p.bank_account_info || (isFrench ? 'Compte par défaut' : 'Default Account'),
-        `€${p.amount}`,
+        `KES ${p.amount}`,
         p.status
       ]);
 
@@ -232,7 +232,7 @@ export default function PayoutsClient({ token }: { token: string | undefined }) 
             </div>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            €{availableBalance.toLocaleString(isFrench ? "fr-FR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            KES {availableBalance.toLocaleString(isFrench ? "fr-FR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {isFrench ? "Prêt à être retiré" : "Ready to be withdrawn"}
@@ -249,7 +249,7 @@ export default function PayoutsClient({ token }: { token: string | undefined }) 
             </div>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            €{totalEarnings.toLocaleString(isFrench ? "fr-FR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            KES {totalEarnings.toLocaleString(isFrench ? "fr-FR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </h2>
           <div className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
             <ArrowUpRight className="w-4 h-4" />
@@ -273,7 +273,7 @@ export default function PayoutsClient({ token }: { token: string | undefined }) 
             {isFrench ? "1er du mois" : "1st of Month"}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {isFrench ? "Estimé : " : "Estimated: "}€{pendingPayouts.toLocaleString(isFrench ? "fr-FR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {isFrench ? "Estimé : " : "Estimated: "}KES {pendingPayouts.toLocaleString(isFrench ? "fr-FR" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </p>
         </div>
       </div>
@@ -362,7 +362,7 @@ export default function PayoutsClient({ token }: { token: string | undefined }) 
                             {p.bank_account_info || (isFrench ? 'Compte par défaut' : 'Default Account')}
                           </p>
                         </td>
-                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">€{p.amount}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">KES {p.amount}</td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
                             p.status === 'PAID' ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' :

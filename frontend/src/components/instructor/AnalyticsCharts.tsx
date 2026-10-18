@@ -19,11 +19,11 @@ import {
 
 const performanceConfig = {
   revenue: {
-    label: "Course revenue (€)",
+    label: "Course revenue (KES)",
     color: "#2563eb",
   },
   target: {
-    label: "Target (€)",
+    label: "Target (KES)",
     color: "#93c5fd",
   },
 } satisfies ChartConfig;
@@ -72,7 +72,7 @@ export function SalesPerformanceChart({ data }: { data?: any[] }) {
               axisLine={false}
               tickMargin={8}
               className="fill-gray-500 dark:fill-white"
-              tickFormatter={(value) => `€${value}`}
+              tickFormatter={(value) => `KES ${value}`}
             />
             <ChartTooltip
               cursor={{ fill: "#dbeafe", opacity: 0.1 }}
@@ -123,7 +123,7 @@ export function RevenueAreaChart({ data }: { data?: any[] }) {
           axisLine={false}
           tickMargin={8}
           className="fill-gray-500 dark:fill-white"
-          tickFormatter={(value) => `€${value}`}
+          tickFormatter={(value) => `KES ${value}`}
         />
         <ChartTooltip
           cursor={{ stroke: "#dbeafe", strokeWidth: 1, strokeDasharray: "4 4" }}

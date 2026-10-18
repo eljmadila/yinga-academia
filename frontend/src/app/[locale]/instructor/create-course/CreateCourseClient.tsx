@@ -657,7 +657,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
 
             <div className="space-y-2">
               <label htmlFor="price" className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                {isFrench ? "Prix de la formation ($)" : "Course Price ($)"}
+                {isFrench ? "Prix de la formation (KES)" : "Course Price (KES)"}
               </label>
               <input
                 id="price"
@@ -667,7 +667,7 @@ export default function CreateCourseClient({ token }: { token: string | undefine
                 step="0.01"
                 value={formData.price}
                 onChange={handleChange}
-                placeholder="0.00"
+                placeholder="0"
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none appearance-none"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400">
