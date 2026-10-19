@@ -17,7 +17,7 @@ export default function PublicFooter() {
               <img
                 src="/images/logo/logo-yinga-full.png"
                 alt="Yinga Academia"
-                className="h-9 w-auto object-contain"
+                className="h-9 sm:h-12 w-auto object-contain"
               />
             </Link>
             <p className="max-w-sm text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
